@@ -1,4 +1,5 @@
-from math import sin, cos, pi
+from math import sin, cos, pi, atan2, acos, sqrt
+from functools import reduce
 
 class Vertex:
     def __init__(self, x, y, z):
@@ -20,9 +21,9 @@ class Edge:
             raise ValueError('Неверное значение длины или границ длины')
 
         if angle_l == None:
-            angle_l = angle
+            angle_l = -pi
         if angle_r == None:
-            angle_r = angle
+            angle_r = pi
             
         if angle_l < -pi or angle_r > pi or angle < angle_l or angle > angle_r or angle_l > angle_r:
             raise ValueError('Неверное значение угла поворота')
@@ -56,7 +57,7 @@ class RoboticArm:
     Положение манипулятора в пространстве определяется начальной
     точкой с координатами x, y, z, углом между плоскостью и осью OX
     angle и набором последовательно соединенных звеньев, имеющих длину L
-    и угол между соседними ребрами angle."""
+    и угол между соседними звеньями angle."""
     
     def __init__(self, x=0.0, y=0.0, z=0.0, angle=0.0, base_len=1.0):
         try:
@@ -67,17 +68,19 @@ class RoboticArm:
             print(E)
 
     def __str__(self):
-        ret = 'Edges:\n' + '\n'.join(list(map(lambda e: e.__str__(), self.edges)))
-        ret = ret + '\nVertices:\n' + '\n'.join(list(map(lambda v: v.__str__(), self.calculate_vertices())))
+        ret = 'Edges:\n' + '\n'.join(map(lambda e: e.__str__(), self.edges))
+        ret = ret + '\nVertices:\n' + '\n'.join(map(lambda v: v.__str__(), self.calculate_vertices()))
         ret = ret + '\nCurrent angle: {}'.format(self.angle)
         return ret
     
-    """Добавляет звено"""
+    
     def append_edge(self, L, ll=None, lr=None, angle=0.0, al=None, ar=None):
+        """Добавляет звено"""
         self.edges.append(Edge(L, ll, lr, angle, al, ar))
 
-    """Возвращает положение сочленений звеньев"""
+    
     def calculate_vertices(self):
+        """Возвращает положение сочленений звеньев"""
         ret = [self.origin]
         angle_z = 0.0
         
@@ -120,22 +123,56 @@ class RoboticArm:
             while self.angle > pi:
                 self.angle -= 2 * pi                
 
-    """Параллельный перенос модели"""
     def move(self, dx, dy, dz):
+        """Параллельный перенос модели"""
         self.origin.x += dx
         self.origin.y += dy
         self.origin.z += dz
-    
-if __name__ == "__main__":
-    r = RoboticArm()
-    r.append_edge(L=2, angle=pi/4)
-    r.append_edge(L=2, angle=pi/2)
-    r.append_edge(L=3, ll=1, al=0.0, ar=pi/2)
-    
-    print(r)
-    r.rotate_edge(1, pi)
-    
-    print(r)
 
-    r.rotate(pi/2)
-    print(r)
+    def grip_move(self, x, y, z):
+        """Перемещение схвата в точку с координатами x, y, z"""
+        angles = None
+        
+        if len(self.edges) == 3:
+            angles = self.grip_move_geom(x, y, z)
+        else:
+            pass # более универсальный метод
+
+        if angles is None:
+            raise ValueError("Перемещение схвата в точку невозможно")
+        
+        self.rotate(angles[0][0] - self.angle)
+
+        for nedge, edge_angle in enumerate(self.edges[1::]):
+            self.rotate_edge(nedge+1, angles[0][nedge+1] - self.edges[nedge+1].angle)
+
+    def grip_move_geom(self, x, y, z):
+        """Геометрическое решение ОКЗ для двухзвенных манипуляторов"""
+        if len(self.edges) != 3:
+            raise ValueError("Геометрический метод работает только для двухзвенных манипуляторов")
+
+        start_z = z - self.edges[0].len # начальная точка (без ребра-базы)
+        e1_len = self.edges[1].len
+        e2_len = self.edges[2].len
+        
+        ret = ([atan2(y, x)], [atan2(y, x)]) # первый угол - угол поворота базы
+
+        d = sqrt(x ** 2 + y ** 2) # длина главной оси
+        s = sqrt(start_z ** 2 + d ** 2) # длина пути от первого сочленения до необходимой точки
+
+        total_length = reduce((lambda x, y : x.len + y.len), self.edges[1::])
+        if total_length < s: # никак не дотянуться
+            return None
+
+        
+        alpha = atan2(start_z, d)
+        beta = acos((s ** 2 + e1_len ** 2 - e2_len ** 2) / (2 * s * e1_len))
+
+        ret[0].append(pi/2 - (alpha + beta)) # одно решение
+        ret[1].append(pi/2 - (alpha - beta)) # второе решение
+
+        theta_2 = acos((s ** 2 - e1_len ** 2 - e2_len ** 2) / (2 * e1_len * e2_len))
+        ret[0].append(theta_2)
+        ret[1].append(-theta_2)
+
+        return ret

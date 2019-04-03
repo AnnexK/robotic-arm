@@ -1,15 +1,7 @@
 from math import sin, cos, pi, atan2, acos, sqrt
 from functools import reduce
+import geometry as geom
 
-class Vertex:
-    def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
-
-    def __str__(self):
-        return "({}; {}; {})".format(self.x, self.y, self.z)
-        
 class Edge:
     def __init__(self, length, len_l=None, len_r=None, angle=0.0, angle_l=None, angle_r=None):
         if len_l == None:
@@ -61,8 +53,8 @@ class RoboticArm:
     
     def __init__(self, x=0.0, y=0.0, z=0.0, angle=0.0, base_len=1.0):
         try:
-            self.origin = Vertex(x, y, z)
-            self.edges = [Edge(base_len)]
+            self.origin = geom.Point(x, y, z)
+            self.edges = [Edge(base_len)] # база как звено
             self.angle = angle
         except ValueError as E:
             print(E)
@@ -83,18 +75,18 @@ class RoboticArm:
         """Возвращает положение сочленений звеньев"""
         ret = [self.origin]
         angle_z = 0.0
-        
+
+        # угол поворота базы для всех звеньев одинаков
         cost = cos(self.angle)
         sint = sin(self.angle)
         
         for edge in self.edges:
             angle_z += edge.angle
+
+            L = edge.len
             
-            new_x = ret[-1].x + edge.len*sin(angle_z)*cost
-            new_y = ret[-1].y + edge.len*sin(angle_z)*sint
-            new_z = ret[-1].z + edge.len*cos(angle_z)
-            
-            ret.append(Vertex(new_x, new_y, new_z))
+            vec = geom.Point(L * cost * sin(angle_z), L * sint * sin(angle_z), L * cos(angle_z), False)
+            ret.append(ret[-1] + vec)
         return ret
 
     """Возвращает положение схвата (последнее звено)"""
@@ -125,10 +117,8 @@ class RoboticArm:
 
     def move(self, dx, dy, dz):
         """Параллельный перенос модели"""
-        self.origin.x += dx
-        self.origin.y += dy
-        self.origin.z += dz
-
+        self.origin = self.origin + geom.Point(dx, dy, dz, False)
+        
     def grip_move(self, x, y, z):
         """Перемещение схвата в точку с координатами x, y, z"""
         angles = None
@@ -139,17 +129,17 @@ class RoboticArm:
             pass # более универсальный метод
 
         if angles is None:
-            raise ValueError("Перемещение схвата в точку невозможно")
+            raise ValueError('Перемещение схвата в точку невозможно')
         
         self.rotate(angles[0][0] - self.angle)
 
-        for nedge, edge_angle in enumerate(self.edges[1::]):
-            self.rotate_edge(nedge+1, angles[0][nedge+1] - self.edges[nedge+1].angle)
+        for nedge, edge in enumerate(self.edges[1::]):
+            self.rotate_edge(nedge+1, angles[0][nedge+1] - edge.angle)
 
     def grip_move_geom(self, x, y, z):
         """Геометрическое решение ОКЗ для двухзвенных манипуляторов"""
         if len(self.edges) != 3:
-            raise ValueError("Геометрический метод работает только для двухзвенных манипуляторов")
+            raise ValueError('Геометрический метод работает только для двухзвенных манипуляторов')
 
         start_z = z - self.edges[0].len # начальная точка (без ребра-базы)
         e1_len = self.edges[1].len
@@ -163,13 +153,12 @@ class RoboticArm:
         total_length = reduce((lambda x, y : x.len + y.len), self.edges[1::])
         if total_length < s: # никак не дотянуться
             return None
-
         
         alpha = atan2(start_z, d)
         beta = acos((s ** 2 + e1_len ** 2 - e2_len ** 2) / (2 * s * e1_len))
 
         ret[0].append(pi/2 - (alpha + beta)) # одно решение
-        ret[1].append(pi/2 - (alpha - beta)) # второе решение
+        ret[1].append(pi/2 - (alpha - beta)) # второе решение        
 
         theta_2 = acos((s ** 2 - e1_len ** 2 - e2_len ** 2) / (2 * e1_len * e2_len))
         ret[0].append(theta_2)

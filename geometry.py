@@ -2,6 +2,7 @@ import numpy as np
 import scipy.linalg as la
 
 from math import sin, cos, sqrt
+from common_math import *
 
 class Point:
     """Точка с однородными координатами"""
@@ -59,6 +60,13 @@ class Point:
             raise ValueError("Операнды не являются векторами")
         else:
             return self.x * other.x + self.y * other.y + self.z * other.z
+
+    def __eq__(self, other):
+        """Равенство двух точек/векторов"""
+        return f_isclose(self.x, other.x) and f_isclose(self.y, other.y) and f_isclose(self.z, other.z) and self.w == other.w
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
     
     @property
     def x(self):
@@ -87,15 +95,6 @@ class Point:
     @property
     def w(self):
         return self._data[3]
-
-    @w.setter
-    def w(self, value):
-        if (self._data[3] == 0.0):
-            raise ValueError("Попытка изменить скаляр бесконечно удаленной точки")
-        elif (self._data[3] != 0.0 and value == 0.0):
-            raise ValueError("Попытка превратить точку в бесконечно удаленную")
-        else:
-            self._data[3] = value
     
     def apply_transform(self, t_matrix):
         """Принимает матрицу numpy и умножает на нее точку"""
@@ -106,7 +105,7 @@ class Point:
             self.x = self.x / self.w
             self.y = self.y / self.w
             self.z = self.z / self.w
-            self.w = 1.0
+            self._data[3] = 1.0
 
     def length(self):
         if self.w != 0:
@@ -232,6 +231,9 @@ class RotationObject(PrimitiveObject):
     def radius(self):
         return self._points[2].length()
 
+    @property
+    def base_point(self):
+        return self._points[0]
 
 class Cylinder(RotationObject):
     """Класс для описания цилиндра

@@ -2,7 +2,8 @@ import numpy as np
 import scipy.linalg as la
 
 from math import sin, cos, sqrt
-from common_math import *
+from common_math import isclose_wrap
+
 
 class Point:
     """Точка с однородными координатами"""
@@ -63,7 +64,7 @@ class Point:
 
     def __eq__(self, other):
         """Равенство двух точек/векторов"""
-        return f_isclose(self.x, other.x) and f_isclose(self.y, other.y) and f_isclose(self.z, other.z) and self.w == other.w
+        return isclose_wrap(self.x, other.x) and isclose_wrap(self.y, other.y) and isclose_wrap(self.z, other.z) and self.w == other.w
 
     def __ne__(self, other):
         return not self.__eq__(other)

@@ -1,4 +1,5 @@
 from math import sin, cos, sqrt, isclose
+from numpy import sign
 
 def isclose_wrap(a, b):
     """Обертка для сравнения двух чисел с плавающей точкой"""
@@ -78,3 +79,30 @@ def linear_circle_solve(lin_eq, circle_eq):
         points = [[k * r, r] for r in roots]
     
     return points # точки на основании
+
+def signed_triangle_area(x1, y1, x2, y2, x3, y3):
+    return (x2 - x1)*(y3 - y1) - (y2 - y1)*(x3 - x1)
+
+def projection_compare(c1, c2, c3, c4):
+    if c1 > c2:
+        c1, c2 = c2, c1
+    if c3 > c4:
+        c3, c4 = c4, c3
+
+    p1 = max(c1, c3)
+    p2 = min(c2, c4)
+
+    return isclose_wrap(p1, p2) or p1 < p2
+    
+def segment_intersect(s1, s2):
+
+    proj_x = projection_compare(s1[0][0], s1[1][0], s2[0][0], s2[1][0])
+    proj_y = projection_compare(s1[0][1], s1[1][1], s2[0][1], s2[1][1])
+
+    area_ab = sign(signed_triangle_area(s1[0][0], s1[0][1], s1[1][0], s1[1][1], s2[0][0], s2[0][1]))
+    area_ab = area_ab * sign(signed_triangle_area(s1[0][0], s1[0][1], s1[1][0], s1[1][1], s2[1][0], s2[1][1]))
+
+    area_cd = sign(signed_triangle_area(s2[0][0], s2[0][1], s2[1][0], s2[1][1], s1[0][0], s1[0][1]))
+    area_cd = area_cd * sign(signed_triangle_area(s2[0][0], s2[0][1], s2[1][0], s2[1][1], s1[1][0], s1[1][1]))
+
+    return proj_x and proj_y and area_ab < 0 and area_cd < 0

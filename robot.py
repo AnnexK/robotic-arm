@@ -50,9 +50,9 @@ class RoboticArm:
         return ret
     
     
-    def append_edge(self, L, ll=None, lr=None, angle=0.0, al=None, ar=None):
+    def append_edge(self, L, angle=0.0, al=None, ar=None):
         """Добавляет звено"""
-        self.edges.append(Edge(L, ll, lr, angle, al, ar))
+        self.edges.append(Edge(L, angle, al, ar))
 
     
     def calculate_vertices(self):
@@ -96,49 +96,80 @@ class RoboticArm:
         """Параллельный перенос модели"""
         self.origin = self.origin + geom.Point(dx, dy, dz, False)
 
-    def grip_move(self, x, y, z):
-        """Перемещение схвата в точку с координатами x, y, z"""
-        angles = None
-        
-        if len(self.edges) == 3:
-            angles = self.grip_move_geom(x, y, z)
-        else:
-            pass # более универсальный метод
-
+    def grip_move(self, angles):
+        """Перемещение схвата на заданные углы
+angles[0] - угол поворота базы
+angles[1..n] - углы поворота соотв звеньев"""
         if angles is None:
             raise ValueError('Перемещение схвата в точку невозможно')
+
+        if len(angles) != len(self.edges):
+            raise ValueError('Несоответстве количества углов')
         
-        self.rotate(angles[0][0] - self.angle)
+        self.rotate(angles[0])
 
-        for nedge, edge in enumerate(self.edges[1::]):
-            self.rotate_edge(nedge+1, angles[0][nedge+1] - edge.angle)
+        for nedge in range(1, len(self.edges)):
+            self.rotate_edge(nedge, angles[nedge])
 
-    def grip_move_geom(self, x, y, z):
-        """Геометрическое решение ОКЗ для двухзвенных манипуляторов"""
-        if len(self.edges) != 3:
-            raise ValueError('Геометрический метод работает только для двухзвенных манипуляторов')
 
-        start_z = z - self.edges[0].len # начальная точка (без ребра-базы)
-        e1_len = self.edges[1].len
-        e2_len = self.edges[2].len
-        
-        ret = ([atan2(y, x)], [atan2(y, x)]) # первый угол - угол поворота базы
-
-        d = sqrt(x ** 2 + y ** 2) # длина главной оси
-        s = sqrt(start_z ** 2 + d ** 2) # длина пути от первого сочленения до необходимой точки
-
-        total_length = reduce((lambda x, y : x.len + y.len), self.edges[1::])
-        if total_length < s: # никак не дотянуться
+def grip_calculate_angles(R, x, y, z):
+    if len(R.edges) == 4:
+        angles = grip_calculate_angles_geom(R, x, y, z)
+        if angles is None:
             return None
+        else:
+            angles[0][0] -= R.angle
+            for nedge, edge in enumerate(R.edges[1::]):
+                angles[0][nedge+1] -= edge.angle
+            return angles[0] # пока одно решение
+    else:
+        return None # более универсальный метод
         
-        alpha = atan2(start_z, d)
-        beta = acos((s ** 2 + e1_len ** 2 - e2_len ** 2) / (2 * s * e1_len))
+def grip_calculate_angles_geom(R, x, y, z):
+    """Геометрическое решение ОКЗ для двухзвенных манипуляторов"""
+    if len(R.edges) != 4: # база, два ребра, схват
+        raise ValueError('Неподходящая модель робота')
+    
+    # перенос координат
+    dx = x - R.origin.x
+    dy = y - R.origin.y
+    dz = z - R.origin.z
+    
+    base_len = R.edges[0].len # длина базы
+    e1_len = R.edges[1].len # длина первого ребра
+    e2_len = R.edges[2].len # длина второго ребра
+    grip_len = R.edges[3].len
 
-        ret[0].append(pi/2 - (alpha + beta)) # одно решение
-        ret[1].append(pi/2 - (alpha - beta)) # второе решение        
+    start_z = dz - base_len + grip_len # начальная точка (без ребра-базы)
+    ret = ([atan2(dy, dx)], [atan2(dy, dx)]) # первый угол - угол поворота базы
+    
+    d = sqrt(dx ** 2 + dy ** 2) # длина главной оси
+    s = sqrt(start_z ** 2 + d ** 2) # длина пути от первого сочленения до необходимой точки
 
-        theta_2 = acos((s ** 2 - e1_len ** 2 - e2_len ** 2) / (2 * e1_len * e2_len))
-        ret[0].append(theta_2)
-        ret[1].append(-theta_2)
+    total_length = reduce((lambda x, y : x.len + y.len), R.edges[1:3:])
+    if total_length < s: # никак не дотянуться
+        return None
+        
+    alpha = atan2(start_z, d)
+    beta = acos((s ** 2 + e1_len ** 2 - e2_len ** 2) / (2 * s * e1_len))
+        
+    ret[0].append(pi/2 - (alpha + beta)) # одно решение
+    ret[1].append(pi/2 - (alpha - beta)) # второе решение        
 
-        return ret
+    theta_2 = acos((s ** 2 - e1_len ** 2 - e2_len ** 2) / (2 * e1_len * e2_len))
+    ret[0].append(theta_2)
+    ret[1].append(-theta_2)
+    
+    # углы схвата
+    ret[0].append(pi - ret[0][1] - ret[0][2])
+    ret[1].append(pi - ret[1][1] - ret[1][2])
+    return ret
+
+def make_robot(Lb=1.0, L1=3.0, L2=3.0, Lg=0.25):
+    """Создает модель двухзвенного робота с заданными длинами базы, звеньев и схвата
+в точке (0;0;0) с углом поворота 0 рад."""
+    R = RoboticArm(base_len=Lb)
+    R.append_edge(L=L1)
+    R.append_edge(L=L2, angle=pi/2)
+    R.append_edge(L=Lg, angle=pi/2)
+    return R

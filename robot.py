@@ -3,15 +3,7 @@ from functools import reduce
 import geometry as geom
 
 class Edge:
-    def __init__(self, length, len_l=None, len_r=None, angle=0.0, angle_l=None, angle_r=None):
-        if len_l == None:
-            len_l = length
-        if len_r == None:
-            len_r = length
-            
-        if len_l > len_r or length < len_l or length > len_r or len_l <= 0:
-            raise ValueError('Неверное значение длины или границ длины')
-
+    def __init__(self, length, angle=0.0, angle_l=None, angle_r=None):
         if angle_l == None:
             angle_l = -pi
         if angle_r == None:
@@ -21,26 +13,18 @@ class Edge:
             raise ValueError('Неверное значение угла поворота')
             
         self.len = length
-        self.len_l = len_l
-        self.len_r = len_r
         self.angle = angle
         self.angle_l = angle_l
         self.angle_r = angle_r
     
     def __str__(self):
-        return '<L=[{}; {} ({})], phi=[{}; {} ({})]>'.format(self.len_l, self.len_r, self.len, self.angle_l, self.angle_r, self.angle)
+        return '<L={}, phi=[{}; {} ({})]>'.format(self.len, self.angle_l, self.angle_r, self.angle)
     
     def rotate(self, angle):
         if self.angle_l <= self.angle + angle <= self.angle_r:
             self.angle += angle
         else:
             raise ValueError('Невозможно произвести наклон')
-
-    def expand(self, l):
-        if self.len_l <= self.len + l <= self.len_r:
-            self.len += l
-        else:
-            raise ValueError('Невозможно произвести изменение длины')
 
         
 class RoboticArm:
@@ -99,14 +83,7 @@ class RoboticArm:
         except ValueError as E:
             print(E)
             print('Номер ребра: {}'.format(nedge))
-            
-    def expand_edge(self, nedge, length):
-        try:
-            self.edges[nedge].expand(length)
-        except ValueError as E:
-            print(E)
-            print('Номер ребра: {}'.format(nedge))
-    
+
     def rotate(self, angle):
         self.angle += angle
         if not -pi <= self.angle <= pi: # переписать
@@ -118,7 +95,7 @@ class RoboticArm:
     def move(self, dx, dy, dz):
         """Параллельный перенос модели"""
         self.origin = self.origin + geom.Point(dx, dy, dz, False)
-        
+
     def grip_move(self, x, y, z):
         """Перемещение схвата в точку с координатами x, y, z"""
         angles = None

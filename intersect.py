@@ -17,8 +17,8 @@ def robot_linear(robot):
 
 def segment_linear(seg):
     """Возвращает коэффициенты прямой, содержащий отрезок"""
-    return cm.linear_equation_segment(seg._points[0].x, seg._points[0].y,
-                                      seg._points[1].x, seg._points[1].y)
+    return cm.linear_equation_segment(seg[0].x, seg[0].y,
+                                      seg[1].x, seg[1].y)
     
 def circle_intersect(robot, rot_obj):
     """Возвращает точки пересечения прямой-проекции плоскости робота на xOy
@@ -33,10 +33,10 @@ def circle_intersect(robot, rot_obj):
 def point_in_segment(seg, x, y):
     """Возвращает принадлежность точки (x, y) отрезку (geom.Segment) seg
 Assert: точка лежит на той же прямой, что и отрезок"""
-    lx = min(seg._points[0].x, seg._points[1].x)
-    rx = max(seg._points[0].x, seg._points[1].x)
-    ly = min(seg._points[0].y, seg._points[1].y)
-    ry = max(seg._points[0].y, seg._points[1].y)
+    lx = min(seg[0].x, seg[1].x)
+    rx = max(seg[0].x, seg[1].x)
+    ly = min(seg[0].y, seg[1].y)
+    ry = max(seg[0].y, seg[1].y)
 
     x_in = lx < x < rx or isclose_wrap(lx, x) or isclose_wrap(rx, x)
     y_in = ly < y < ry or isclose_wrap(ly, y) or isclose_wrap(ry, y)
@@ -59,7 +59,7 @@ def rectangle_intersect(robot, piped):
     for i, eq in enumerate(seg_eq):
         solution = cm.linear_solve(plane_eq, eq) # найти пересечение
         if not solution and solution is not None: # совпадают (возвращен пустой кортеж)
-            seg_points = segments[i]._points
+            seg_points = segments[i][0::]
             return [geom.Point(seg_points[0].x, seg_points[0].y, seg_points[0].z),
                     geom.Point(seg_points[1].x, seg_points[1].y, seg_points[1].z)]
         elif solution is None: # параллельны (возвращено None)
@@ -68,12 +68,12 @@ def rectangle_intersect(robot, piped):
             continue
         else: # пересекаются (возвращен кортеж с координатами)
             if point_in_segment(segments[i], solution[0], solution[1]):
-                ret.append(geom.Point(solution[0], solution[1], piped._points[0].z))
+                ret.append(geom.Point(solution[0], solution[1], piped[0].z))
                 # точка пересечения на границе отрезка
                 # -> другой отрезок тоже пересекает прямую в этой плоскости
-                if ret and segments[i]._points[0] == ret[-1]:
+                if ret and segments[i][0] == ret[-1]:
                     testing[(i-1)%4] = False                
-                if ret and segments[i]._points[1] == ret[-1]:
+                if ret and segments[i][1] == ret[-1]:
                     testing[(i+1)%4] = False
 
     return ret
@@ -121,7 +121,7 @@ base_points - массив geom.Point, cone - объект geom.Cone"""
         p2 = base_points[1]
         
         pivot = [(p1.x+p2.x)/2, (p1.y+p2.y)/2] # вершина гиперболы
-        c_origin = cone._points[0]
+        c_origin = cone[0]
         # расстояние от центра до плоскости сечения, параллельной Oz
         dist_from_center = sqrt((pivot[0] - c_origin.x) ** 2 + (pivot[1] - c_origin.y) ** 2) 
         dist_sect = R * (1 - h_pl/h) # расстояние от центра до плоскости сечения усеченного конуса
@@ -153,14 +153,14 @@ base_points - массив geom.Point, cone - объект geom.Cone"""
 def plane_intersect(seg, plane):
     """Проверяет пересечение отрезка и плоскости"""
 
-    p1 = seg._points[0]
-    p2 = seg._points[1]
+    p1 = seg[0]
+    p2 = seg[1]
 
     # векторы от точки на плоскости до точек отрезка
-    v1 = p1 - plane._points[1]
-    v2 = p2 - plane._points[1]
+    v1 = p1 - plane[1]
+    v2 = p2 - plane[1]
 
-    n = plane._points[0]
+    n = plane[0]
 
     # скалярные произведения
     dp1 = n * v1
@@ -173,11 +173,11 @@ def plane_intersect(seg, plane):
 def segment_intersect(seg1, seg2):
     """Проверяет пересечение двух отрезков (geom.Segment) в плоскости xOy"""
     
-    return cm.segment_intersect([[seg1._points[0].x, seg1._points[0].y],
-                                 [seg1._points[1].x, seg1._points[1].y]],
-                                [[seg2._points[0].x, seg2._points[0].y],
-                                 [seg2._points[1].x, seg2._points[1].y]])
-    
+    return cm.segment_intersect([[seg1[0].x, seg1[0].y],
+                                 [seg1[1].x, seg1[1].y]],
+                                [[seg2[0].x, seg2[0].y],
+                                 [seg2[1].x, seg2[1].y]])
+
 def polygon_intersect(seg, seg_seq, phi):
     """Проверяет пересечение отрезка и многоугольника, представленного последовательностью
 отрезков"""
@@ -205,7 +205,10 @@ def intersect_object(robot, gobj):
     rseg = build_segments(robot)
 
     phi = robot.angle
-    
+
+    # todo: рефактор в метод классов для каждого объекта
+    # а то глупо делать новые объекты, а обработку столкновений
+    # менять здесь
     for s in rseg:
         if type(gobj) == geom.Plane:
             if plane_intersect(s, gobj):
@@ -218,7 +221,7 @@ def intersect_object(robot, gobj):
                 return True
         elif type(gobj) == geom.Cylinder:
             base = circle_intersect(robot, gobj)
-            vec = gobj._points[1]
+            vec = gobj[1]
             poly = build_rectangle(base, vec)
             if polygon_intersect(s, poly, phi):
                 return True
@@ -239,6 +242,7 @@ def intersect(robot, gobj_seq):
     return self_intersect(robot)
 
 def self_intersect(robot):
+    """Проверка звеньев робота на самопересечение"""
     rseg = build_segments(robot)
 
     k = len(rseg)

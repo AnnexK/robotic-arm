@@ -125,6 +125,9 @@ class PrimitiveObject:
         ret = 'Points:\n' + '\n'.join(map(lambda p: p.__str__(), self._points))
         return ret
 
+    def __getitem__(self, i):
+        return self._points[i]
+    
     def apply_transform(self, tmatrix):
         """Применить преобразование ко всем точкам объекта"""
         for p in self._points:

@@ -54,6 +54,9 @@ class RoboticArm:
         """Добавляет звено"""
         self.edges.append(Edge(L, angle, al, ar))
 
+    def get_angles(self):
+        """Возвращает список углов"""
+        return [self.angle] + [e.angle for e in self.edges[1::]]
     
     def calculate_vertices(self):
         """Возвращает положение сочленений звеньев"""
@@ -69,7 +72,10 @@ class RoboticArm:
 
             L = edge.len
             
-            vec = geom.Point(L * cost * sin(angle_z), L * sint * sin(angle_z), L * cos(angle_z), False)
+            vec = geom.Point(L * cost * sin(angle_z),
+                             L * sint * sin(angle_z),
+                             L * cos(angle_z),
+                             False)
             ret.append(ret[-1] + vec)
         return ret
 
@@ -94,7 +100,9 @@ class RoboticArm:
 
     def move(self, dx, dy, dz):
         """Параллельный перенос модели"""
-        self.origin = self.origin + geom.Point(dx, dy, dz, False)
+        self.origin = self.origin + geom.Point(dx,
+                                               dy,
+                                               dz, False)
 
     def grip_move(self, angles):
         """Перемещение схвата на заданные углы
@@ -140,11 +148,15 @@ def grip_calculate_angles_geom(R, x, y, z):
     e2_len = R.edges[2].len # длина второго ребра
     grip_len = R.edges[3].len
 
-    start_z = dz - base_len + grip_len # начальная точка (без ребра-базы)
-    ret = ([atan2(dy, dx)], [atan2(dy, dx)]) # первый угол - угол поворота базы
-    
-    d = sqrt(dx ** 2 + dy ** 2) # длина главной оси
-    s = sqrt(start_z ** 2 + d ** 2) # длина пути от первого сочленения до необходимой точки
+    # начальная точка (без ребра-базы)
+    start_z = dz - base_len + grip_len
+    # первый угол - угол поворота базы
+    ret = ([atan2(dy, dx)], [atan2(dy, dx)]) 
+
+    # длина главной оси
+    d = sqrt(dx ** 2 + dy ** 2)
+    # длина пути от первого сочленения до необходимой точки
+    s = sqrt(start_z ** 2 + d ** 2) 
 
     total_length = reduce((lambda x, y : x.len + y.len), R.edges[1:3:])
     if total_length < s: # никак не дотянуться

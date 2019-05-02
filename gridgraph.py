@@ -45,8 +45,7 @@ class GridGraph:
         self.metric = metfoo
 
         # X, Y, Z
-        self.edges = dict.fromkeys([(1,0,0),(0,1,0),(0,0,1)],SortedDict())        
-
+        self.edges = [SortedDict(), SortedDict(), SortedDict()]
         
     def origin_to_grid(self, point):
         """origin_to_grid : tuple -> tuple
@@ -106,15 +105,15 @@ class GridGraph:
 
         # выбор массива для поиска/вставки
         if abs(dx) == 1:
-            edges_idx = (1,0,0)
+            edges_idx = 0
         elif abs(dy) == 1:
-            edges_idx = (0,1,0)
+            edges_idx = 1
         elif abs(dz) == 1:
-            edges_idx = (0,0,1)
+            edges_idx = 2
         else:
-            edges_idx = None
+            edges_idx = -1
         
-        if abs(dx)+abs(dy)+abs(dz) != 1 or edges_idx is None:
+        if abs(dx)+abs(dy)+abs(dz) != 1 or edges_idx < 0:
             raise ValueError("Вектор не является ортом, параллельным осям")
 
         # вычисление координат точки в решетке

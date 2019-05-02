@@ -1,11 +1,13 @@
 import robot
 import geometry as geom
 from intersect import intersect
-
-from numpy import abs
 from gridgraph import GraphEdge, GridGraph
 from common_math import isclose_wrap
 
+from functools import reduce
+from numpy import abs
+from copy import deepcopy
+from math import inf
 import random
 
 def metric_angle_diff(args):
@@ -16,7 +18,10 @@ def metric_angle_diff(args):
     d = args[2] # tuple из трех float'ов
 
     # в diff значения углов на которые нужно повернуть робота
-    diff = grip_calculate_angles(R, d[0], d[1], d[2])
+    diff = robot.grip_calculate_angles(R, d[0], d[1], d[2])
+    if diff is None:
+        return inf
+    
     # а суммарное расстояние поворота можно посчитать так
     res = reduce(lambda x,y : abs(x) + abs(y), diff)
     
@@ -60,10 +65,11 @@ class Ant:
     base_phero = 0.0
     # граф, в котором происходит поиск решения (reference)
     assoc_graph = None
+    # сколько всего феромона откладывает муравей
+    Q = 1.0
     
-    def __init__(self, pos, Q=1.0):
+    def __init__(self, pos):
         self.pos = pos # текущее положение в сетке
-        self.Q = Q # сколько всего будет отложено феромона (общий или частный?)
         self.path_len = 0.0 # длина текущего пути
         self.path_edges = list() # стек с ребрами
         self.path_verts = [pos] # стек с вершинами
@@ -97,7 +103,6 @@ class Ant:
         # точки, в которые можно попробовать попасть
         target_points = list(map(sum_fun, [self.pos]*6, vecs))
 
-        print('Target points: ', target_points)
         # ребра, по которым можно пройти
         edges = [G.get_edge(self.pos,t,metric_args+[G.grid_to_origin(t)])
                  for t in target_points]
@@ -119,7 +124,6 @@ class Ant:
                                    edges[i].weight,
                                    self.alpha,
                                    self.beta)
-            print('Iter=', i, '; attr=', attr)
             
             total_attr += attr
             attrs.append(total_attr)
@@ -127,8 +131,6 @@ class Ant:
         # случайный выбор тут
         
         seed = total_attr * random.random()
-
-        print('Attractiveness thresholds: ', attrs)
         
         choice = 0
         for i in range(0,6):
@@ -162,7 +164,102 @@ class Ant:
 
         self.pos = self.path_verts[0]
 
-        while len(self.path_verts) > 0:
+        while len(self.path_verts) > 1:
             ret[0].append(self.path_verts.pop())
 
+        ret[0].append(self.path_verts[0])
+        self.path_edges.clear()
+        
         return ret
+
+
+class Solver:
+    """"""
+    def __init__(self,
+                 R, end, obj_seq,
+                 a, b, q, rho,
+                 base_pheromone=0.01):
+
+        O = R.origin
+        e = R.edges
+        min_point = (O.x - e[1].len - e[2].len,
+                     O.y - e[1].len - e[2].len,
+                     O.z + e[0].len - e[3].len - e[1].len - e[2].len)
+        max_point = (O.x + e[1].len + e[2].len,
+                     O.y + e[1].len + e[2].len,
+                     O.z + e[0].len - e[3].len + e[1].len + e[2].len)
+
+        G = GridGraph(min_point,
+                      max_point,
+                      grid_step=0.1,
+                      metfoo=metric_angle_diff,
+                      edge_type=PheromoneEdge)
+        
+        self.ant_spawner = Ant
+        self.ant_spawner.alpha = a
+        self.ant_spawner.assoc_graph = G
+        self.ant_spawner.beta = b
+        self.ant_spawner.Q = q
+        self.ant_spawner.base_phero = base_pheromone
+        self.decay = rho
+        
+        start = R.calculate_grip()
+        self.start = G.origin_to_grid((start.x, start.y, start.z))
+        self.end = G.origin_to_grid(end)
+
+        self.robot = deepcopy(R)
+        self.objects = obj_seq
+        
+    def pheromone_decay(self):
+        self.ant_spawner.base_phero *= (1 - self.decay)
+        for d in self.ant_spawner.assoc_graph.edges.values():
+            for e in d.values():
+                e.phi *= (1 - self.decay)
+
+    def create_ants(self, amount):
+        self.ants = [self.ant_spawner(self.start) for i in range(0,amount)]
+    
+    def solve(self, iters=1, ants_n=20):
+
+        # создаем муравьев один раз,
+        # а потом в каждой итерации откатываем их состояние
+        # к начальному        
+        self.create_ants(ants_n)
+        best_paths = len(self.ants) * [None]
+        
+        for i in range(0, iters):
+            print('Iter #', i+1)
+            # поиск решения
+            a_num = 1
+            for a in self.ants:
+                print('Ant#', a_num)
+                while a.pos != self.end:
+                    a.pick_edge([self.robot, self.objects])
+                    # переместить робота
+                    real_point = self.ant_spawner.assoc_graph.grid_to_origin(a.pos)                
+                    cur_pos = robot.grip_calculate_angles(self.robot,
+                                                          real_point[0],
+                                                          real_point[1],
+                                                          real_point[2])
+                    self.robot.grip_move(cur_pos)
+                print('Ant#', a_num, 'finished, path len:', a.path_len)
+                # вернуть обратно
+                real_point = self.ant_spawner.assoc_graph.grid_to_origin(a.path_verts[0])
+                cur_pos = robot.grip_calculate_angles(self.robot,
+                                                      real_point[0],
+                                                      real_point[1],
+                                                      real_point[2])
+                self.robot.grip_move(cur_pos)
+                
+            # обновление феромона
+            self.pheromone_decay()
+            for k, a in enumerate(self.ants):
+                a.distribute_pheromone()
+                cur_path = a.unwind_path()
+                if i==0 or cur_path[1] < best_paths[k][1]:
+                    best_paths[k] = cur_path
+
+        best_est_path = min(best_paths, key=lambda p : p[1])
+        return list(map(self.ant_spawner.assoc_graph.grid_to_origin,
+                        best_est_path[0])),best_est_path[1]
+    

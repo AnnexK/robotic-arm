@@ -1,6 +1,6 @@
-from sortedcontainers import SortedDict # ассоц. массив
 from math import inf
 from common_math import isclose_wrap
+from numpy import ndarray
 
 
 def metric_static(args):
@@ -37,15 +37,17 @@ class GridGraph:
         self.step = grid_step
         
         # количество ребер в каждой размерности
-        self.x_nedges = int(abs(start_point[0] - end_point[0]) * (1/grid_step))
-        self.y_nedges = int(abs(start_point[1] - end_point[1]) * (1/grid_step))
-        self.z_nedges = int(abs(start_point[2] - end_point[2]) * (1/grid_step))
+        self.x_nedges = int(round(abs(start_point[0] - end_point[0]) * (1/grid_step)))
+        self.y_nedges = int(round(abs(start_point[1] - end_point[1]) * (1/grid_step)))
+        self.z_nedges = int(round(abs(start_point[2] - end_point[2]) * (1/grid_step)))
 
         # метрика графа
         self.metric = metfoo
 
         # X, Y, Z
-        self.edges = [SortedDict(), SortedDict(), SortedDict()]
+        self.edges = [ndarray(shape=(self.x_nedges,self.y_nedges+1,self.z_nedges+1), dtype=object),
+                      ndarray(shape=(self.x_nedges+1,self.y_nedges,self.z_nedges+1), dtype=object),
+                      ndarray(shape=(self.x_nedges+1,self.y_nedges+1,self.z_nedges), dtype=object)]
         
     def origin_to_grid(self, point):
         """origin_to_grid : tuple -> tuple
@@ -70,7 +72,7 @@ class GridGraph:
 
         if in_x and in_y and in_z:
             mult = 1/self.step
-            return tuple(round(c * mult) for c in [x-lx, y-ly, z-lz])
+            return tuple(int(round(c * mult)) for c in [x-lx, y-ly, z-lz])
         else:
             return -1,
 
@@ -92,8 +94,8 @@ class GridGraph:
         else:
             return None
 
-    def get_edge(self, start, end, metric_data):
-        """get_edge : tuple, tuple, (data) -> [float, float]
+    def get_edge(self, start, end, metric_data=[]):
+        """get_edge : tuple, tuple, (data) -> GraphEdge
 Возвращает данные ребра с началом в точке start и концом в
 точке end (коорд. сетки)
 Если ребро еще не было посещено ни разу, создается новое
@@ -126,12 +128,8 @@ class GridGraph:
         in_z = 0 <= point[2] <= self.z_nedges - abs(dz)
 
         if in_x and in_y and in_z:
-            try:
-                return self.edges[edges_idx][point]
-            except KeyError as ke: # элемента нет в ассоц. массиве
-                # длина
-                edge = self.allocator(self.metric(metric_data))                
-                self.edges[edges_idx][point] = edge
-                return self.edges[edges_idx][point]
+            if self.edges[edges_idx][point] is None: # ребро еще не было посещено
+                self.edges[edges_idx][point] = self.allocator(self.metric(metric_data))
+            return self.edges[edges_idx][point]
         else:
             return self.allocator(inf) # ребра нет

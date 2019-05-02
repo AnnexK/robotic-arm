@@ -1,6 +1,7 @@
 from math import sin, cos, pi, atan2, acos, sqrt
 from functools import reduce
 import geometry as geom
+from common_math import isclose_wrap
 
 class Edge:
     def __init__(self, length, angle=0.0, angle_l=None, angle_r=None):
@@ -21,7 +22,10 @@ class Edge:
         return '<L={}, phi=[{}; {} ({})]>'.format(self.len, self.angle_l, self.angle_r, self.angle)
     
     def rotate(self, angle):
-        if self.angle_l <= self.angle + angle <= self.angle_r:
+        l_eq = isclose_wrap(self.angle_l, self.angle+angle)
+        r_eq = isclose_wrap(self.angle_r, self.angle+angle)
+        
+        if self.angle_l < self.angle + angle < self.angle_r or l_eq or r_eq:
             self.angle += angle
         else:
             raise ValueError('Невозможно произвести наклон')
@@ -92,7 +96,7 @@ class RoboticArm:
 
     def rotate(self, angle):
         self.angle += angle
-        if not -pi <= self.angle <= pi: # переписать
+        if -pi > self.angle or self.angle > pi: # переписать
             while self.angle < -pi:
                 self.angle += 2 * pi
             while self.angle > pi:
@@ -132,7 +136,7 @@ def grip_calculate_angles(R, x, y, z):
             return angles[0] # пока одно решение
     else:
         return None # более универсальный метод
-        
+    
 def grip_calculate_angles_geom(R, x, y, z):
     """Геометрическое решение ОКЗ для двухзвенных манипуляторов"""
     if len(R.edges) != 4: # база, два ребра, схват
@@ -146,7 +150,7 @@ def grip_calculate_angles_geom(R, x, y, z):
     base_len = R.edges[0].len # длина базы
     e1_len = R.edges[1].len # длина первого ребра
     e2_len = R.edges[2].len # длина второго ребра
-    grip_len = R.edges[3].len
+    grip_len = R.edges[3].len # длина ребра схвата
 
     # начальная точка (без ребра-базы)
     start_z = dz - base_len + grip_len
@@ -156,8 +160,11 @@ def grip_calculate_angles_geom(R, x, y, z):
     # длина главной оси
     d = sqrt(dx ** 2 + dy ** 2)
     # длина пути от первого сочленения до необходимой точки
-    s = sqrt(start_z ** 2 + d ** 2) 
-
+    s = sqrt(start_z ** 2 + d ** 2)
+    # s == 0 -> точка назначения внутри базы
+    if isclose_wrap(s, 0.0):
+        return None
+    
     total_length = reduce((lambda x, y : x.len + y.len), R.edges[1:3:])
     if total_length < s: # никак не дотянуться
         return None

@@ -1,9 +1,9 @@
 from math import inf
 from common_math import isclose_wrap
 from numpy import ndarray
+from functools import reduce
 
-
-def metric_static(args):
+def metric_static():
     # возвращает 1
     return 1.0
 
@@ -22,11 +22,37 @@ class GraphEdge:
 
 class GridGraph:
     """Класс, моделирующий граф-решетку в трехмерном пространстве"""
-    def __init__(self, start_point, end_point, grid_step=0.1, metfoo=metric_static, edge_type=GraphEdge):
-        """Инициализировать граф с угловыми точками и заданной метрикой"""
+    class GGIterator:
+        def __init__(self, g):
+            self.e = g.edges # ссылка на массив ребер
+            self.ei = 0 # положение в массиве по параллельности ребер
+            self.xc = 0 # текущая координата x
+            self.xm = g.x_nedges # макс координата x
+            self.yc = 0
+            self.ym = g.y_nedges
+            self.zc = 0
+            self.zm = g.z_nedges
 
-        if not issubclass(edge_type, GraphEdge):
-            raise ValueError("Передан класс не типа GraphEdge")
+        def __next__(self):
+            if self.ei == 3:
+                raise StopIteration
+            
+            idx = (self.xc, self.yc, self.zc)
+            eidx = self.ei
+            self.xc += 1
+            if self.xc == self.xm - (self.ei == 0):
+                self.xc = 0
+                self.yc += 1
+                if self.yc == self.ym - (self.ei == 1):
+                    self.yc = 0
+                    self.zc += 1
+                    if self.zc == self.zm - (self.ei == 2):
+                        self.zc = 0
+                        self.ei += 1
+            return self.e[eidx][idx]
+        
+    def __init__(self, start_point, end_point, grid_step=0.1, edge_type=GraphEdge):
+        """Инициализировать граф с угловыми точками"""
 
         self.allocator = edge_type
         
@@ -41,14 +67,14 @@ class GridGraph:
         self.y_nedges = int(round(abs(start_point[1] - end_point[1]) * (1/grid_step)))
         self.z_nedges = int(round(abs(start_point[2] - end_point[2]) * (1/grid_step)))
 
-        # метрика графа
-        self.metric = metfoo
-
         # X, Y, Z
         self.edges = [ndarray(shape=(self.x_nedges,self.y_nedges+1,self.z_nedges+1), dtype=object),
                       ndarray(shape=(self.x_nedges+1,self.y_nedges,self.z_nedges+1), dtype=object),
                       ndarray(shape=(self.x_nedges+1,self.y_nedges+1,self.z_nedges), dtype=object)]
-        
+
+    def __iter__(self):
+        return self.GGIterator(self)
+    
     def origin_to_grid(self, point):
         """origin_to_grid : tuple -> tuple
 Преобразует координаты точки в пространстве к координатам ближайшей к ней точки в графе
@@ -94,13 +120,31 @@ class GridGraph:
         else:
             return None
 
-    def get_edge(self, start, end, metric_data=[]):
-        """get_edge : tuple, tuple, (data) -> GraphEdge
-Возвращает данные ребра с началом в точке start и концом в
-точке end (коорд. сетки)
-Если ребро еще не было посещено ни разу, создается новое
-с метрикой, посчитанной по данным metric_data и помещается
-в граф"""
+    def __check_args(self, args):
+        """Проверка аргументов для индексаторов"""
+        try:
+            if len(args) != 2:
+                raise ValueError("Недостаточное количество размерностей")
+        except TypeError:
+            raise ValueError("Недостаточное количество размерностей")
+
+        start = args[0]
+        end = args[1]
+
+        if len(start) != 3 or len(end) != 3:
+            raise ValueError("Переданы параметры, не идентифицирующие вершины")
+
+        # проверка элементов кортежей на целочисленность
+        all_ints = reduce(lambda x,y: x & y,
+                          [isinstance(b, int) for b in start+end])
+
+        if not all_ints:
+            raise ValueError("Не все координаты сетки целочисленные")
+
+        return start, end
+    
+    def __check_bounds(self, start, end):
+        """Проверка на принадлежность ребра графу"""
         dx = end[0]-start[0]
         dy = end[1]-start[1]
         dz = end[2]-start[2]
@@ -116,7 +160,7 @@ class GridGraph:
             edges_idx = -1
         
         if abs(dx)+abs(dy)+abs(dz) != 1 or edges_idx < 0:
-            raise ValueError("Вектор не является ортом, параллельным осям")
+            return None, None
 
         # вычисление координат точки в решетке
         point = tuple(p - (v == -1) for p, v in zip(start, [dx,dy,dz])) 
@@ -128,8 +172,35 @@ class GridGraph:
         in_z = 0 <= point[2] <= self.z_nedges - abs(dz)
 
         if in_x and in_y and in_z:
-            if self.edges[edges_idx][point] is None: # ребро еще не было посещено
-                self.edges[edges_idx][point] = self.allocator(self.metric(metric_data))
+            return edges_idx, point
+        else:
+            return None, None
+        
+    def __getitem__(self, v):
+
+        #start, end = self.__check_args(v)
+        start, end = v[0], v[1]
+        edges_idx, point = self.__check_bounds(start, end)
+        
+        if point is not None:
             return self.edges[edges_idx][point]
         else:
-            return self.allocator(inf) # ребра нет
+            return None # ребра нет
+
+    def __setitem__(self, v, value):
+        #start, end = self.__check_args(v)
+        start, end = v[0], v[1]
+
+        edges_idx, point = self.__check_bounds(start,end)
+
+        if point is not None:
+            try:
+                __ = iter(value)
+                self.edges[edges_idx][point] = self.allocator(*value)
+            except TypeError:
+                if value is None:
+                    self.edges[edges_idx][point] = None
+                else:
+                    self.edges[edges_idx][point] = self.allocator(value)
+        else:
+            pass # или бросить исключение

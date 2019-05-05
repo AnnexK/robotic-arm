@@ -4,23 +4,21 @@ from intersect import intersect
 from gridgraph import GraphEdge, GridGraph
 from common_math import isclose_wrap
 
+import time
 from functools import reduce
 from numpy import abs
 from copy import deepcopy
 from math import inf
 import random
 
-def metric_angle_diff(args):
+def metric_angle_diff(R, obj_seq, d):
     """Вычисляет сумму модулей разности углов робота R при перемещении схвата
 в точку пространства d с проверкой на пересечение с объектами в obj_seq"""
-    R = args[0] # RoboticArm
-    obj_seq = args[1] # последовательность geom.Object
-    d = args[2] # tuple из трех float'ов
-
+    
     # в diff значения углов на которые нужно повернуть робота
     diff = robot.grip_calculate_angles(R, d[0], d[1], d[2])
     if diff is None:
-        return inf
+        return None
     
     # а суммарное расстояние поворота можно посчитать так
     res = reduce(lambda x,y : abs(x) + abs(y), diff)
@@ -28,7 +26,7 @@ def metric_angle_diff(args):
     R.grip_move(diff)
     # найдено пересечение - перемещение невозможно
     if intersect(R, obj_seq): 
-        res = inf
+        res = None
     # обратное перемещение
     R.grip_move([-1 * a for a in diff])
     return res
@@ -36,7 +34,7 @@ def metric_angle_diff(args):
 
 class PheromoneEdge(GraphEdge):
     """Класс, описывающий ребро графа с дополнительным полем значения феромона"""
-    def __init__(self, w, phi=0.0):
+    def __init__(self, w, phi):
         super().__init__(w)
         self._pheromones = phi
 
@@ -88,7 +86,7 @@ class Ant:
             raise ValueError("Точка не принадлежит графу")
         self._grid_pos = value
 
-    def pick_edge(self, metric_args=[]):
+    def pick_edge(self):
         """Совершает перемещение в одну из соседних точек в графе G"""
 
         # возможно, переместить в solver и инициализировать один раз?
@@ -104,8 +102,7 @@ class Ant:
         target_points = list(map(sum_fun, [self.pos]*6, vecs))
 
         # ребра, по которым можно пройти
-        edges = [G.get_edge(self.pos,t,metric_args+[G.grid_to_origin(t)])
-                 for t in target_points]
+        edges = [G[self.pos,t] for t in target_points]
 
         # привлекательности ребер
         attrs = [0.0]
@@ -114,16 +111,14 @@ class Ant:
         for i in range(0,6):
             # посчитать привлекательность ребра
 
-            # обход случая когда beta = 0, а ребра не существует
-            if edges[i].weight == inf:
-                p = 0.0
+            # ребра нет
+            if edges[i] is None:
+                attr = 0.0
             else:
-                p = self.base_phero + edges[i].phi
-            
-            attr = edge_attraction(p,
-                                   edges[i].weight,
-                                   self.alpha,
-                                   self.beta)
+                attr = edge_attraction(self.base_phero + edges[i].phi,
+                                       edges[i].weight,
+                                       self.alpha,
+                                       self.beta)
             
             total_attr += attr
             attrs.append(total_attr)
@@ -132,7 +127,7 @@ class Ant:
         
         seed = total_attr * random.random()
         
-        choice = 0
+        choice = None
         for i in range(0,6):
             # выбор ребра
             decision = isclose_wrap(attrs[i], seed)
@@ -146,6 +141,9 @@ class Ant:
                 choice = i
                 break
 
+        if choice is None:
+            raise Exception("Из вершины нет ни одного ребра")
+        
         # добавить в стек
         self.path_edges.append(edges[choice]) 
         self.path_verts.append(target_points[choice])
@@ -174,11 +172,11 @@ class Ant:
 
 
 class Solver:
-    """"""
+    """Класс, моделирующий решение задачи"""
     def __init__(self,
-                 R, end, obj_seq,
-                 a, b, q, rho,
-                 base_pheromone=0.01):
+                 R=robot.make_robot(), end=(1.2,2.3,3.4), obj_seq=[],
+                 a=1.0, b=1.0, q=1.0, rho=0.01,
+                 base_pheromone=0.1):
 
         O = R.origin
         e = R.edges
@@ -192,7 +190,6 @@ class Solver:
         G = GridGraph(min_point,
                       max_point,
                       grid_step=0.1,
-                      metfoo=metric_angle_diff,
                       edge_type=PheromoneEdge)
         
         self.ant_spawner = Ant
@@ -207,9 +204,36 @@ class Solver:
         self.start = G.origin_to_grid((start.x, start.y, start.z))
         self.end = G.origin_to_grid(end)
 
-        self.robot = deepcopy(R)
-        self.objects = obj_seq
-        
+        self.R = deepcopy(R)
+        self.objs = obj_seq
+
+    def precalculate_edges(self):
+        G = self.ant_spawner.assoc_graph
+
+        start = time.time()
+        for x in range(0, G.x_nedges):
+            for y in range(0, G.y_nedges):
+                for z in range(0, G.z_nedges):
+                    rx, ry, rz = G.grid_to_origin((x, y, z))
+                    diff = robot.grip_calculate_angles(self.R, rx, ry, rz)
+                    if diff is None:
+                        G[(x,y,z),(x+1,y,z)] = None
+                        G[(x,y,z),(x,y+1,z)] = None
+                        G[(x,y,z),(x,y,z+1)] = None
+                    else:
+                        self.R.grip_move(diff)
+                        px = G.grid_to_origin((x+1,y,z))
+                        py = G.grid_to_origin((x,y+1,z))
+                        pz = G.grid_to_origin((x,y,z+1))
+                        mx = metric_angle_diff(self.R, self.objs, px)
+                        my = metric_angle_diff(self.R, self.objs, py)
+                        mz = metric_angle_diff(self.R, self.objs, pz)
+                        G[(x,y,z),(x+1,y,z)] = None if mx is None else mx, 0.0
+                        G[(x,y,z),(x,y+1,z)] = None if my is None else my, 0.0
+                        G[(x,y,z),(x,y,z+1)] = None if mz is None else mz, 0.0
+        end = time.time()
+        print("Precalculation finished, time: ", end - start)
+    
     def pheromone_decay(self):
         self.ant_spawner.base_phero *= (1 - self.decay)
         for d in self.ant_spawner.assoc_graph.edges.values():
@@ -225,7 +249,7 @@ class Solver:
         # а потом в каждой итерации откатываем их состояние
         # к начальному        
         self.create_ants(ants_n)
-        best_paths = len(self.ants) * [None]
+        best_paths = ants_n * [None]
         
         for i in range(0, iters):
             print('Iter #', i+1)
@@ -234,22 +258,8 @@ class Solver:
             for a in self.ants:
                 print('Ant#', a_num)
                 while a.pos != self.end:
-                    a.pick_edge([self.robot, self.objects])
-                    # переместить робота
-                    real_point = self.ant_spawner.assoc_graph.grid_to_origin(a.pos)                
-                    cur_pos = robot.grip_calculate_angles(self.robot,
-                                                          real_point[0],
-                                                          real_point[1],
-                                                          real_point[2])
-                    self.robot.grip_move(cur_pos)
+                    a.pick_edge()
                 print('Ant#', a_num, 'finished, path len:', a.path_len)
-                # вернуть обратно
-                real_point = self.ant_spawner.assoc_graph.grid_to_origin(a.path_verts[0])
-                cur_pos = robot.grip_calculate_angles(self.robot,
-                                                      real_point[0],
-                                                      real_point[1],
-                                                      real_point[2])
-                self.robot.grip_move(cur_pos)
                 
             # обновление феромона
             self.pheromone_decay()

@@ -3,10 +3,6 @@ from common_math import isclose_wrap
 from numpy import ndarray
 from functools import reduce
 
-def metric_static():
-    # возвращает 1
-    return 1.0
-
 class GraphEdge:
     def __init__(self, w):
         self._weight = w
@@ -40,13 +36,13 @@ class GridGraph:
             idx = (self.xc, self.yc, self.zc)
             eidx = self.ei
             self.xc += 1
-            if self.xc == self.xm - (self.ei == 0):
+            if self.xc > self.xm - (self.ei == 0):
                 self.xc = 0
                 self.yc += 1
-                if self.yc == self.ym - (self.ei == 1):
+                if self.yc > self.ym - (self.ei == 1):
                     self.yc = 0
                     self.zc += 1
-                    if self.zc == self.zm - (self.ei == 2):
+                    if self.zc > self.zm - (self.ei == 2):
                         self.zc = 0
                         self.ei += 1
             return self.e[eidx][idx]
@@ -119,6 +115,18 @@ class GridGraph:
             return tuple(self.start[i] + self.step * point[i] for i in range(0,3))
         else:
             return None
+
+    def get_adjacent(self, v):
+        """Возвращает список смежных вершин для вершины v"""
+        bound = lambda v: 0 <= v[0] <= self.x_nedges and 0 <= v[1] <= self.y_nedges and 0 <= v[2] <= self.z_nedges
+        if not bound(v):
+            return None
+        
+        sum_fun = lambda x, y : (x[0] + y[0], x[1] + y[1], x[2] + y[2])
+        vecs = [(1,0,0),(-1,0,0),(0,1,0),(0,-1,0),(0,0,1),(0,0,-1)]
+
+        # точки, в которые можно попробовать попасть
+        return filter(bound, map(sum_fun, [v]*6, vecs))
 
     def __check_args(self, args):
         """Проверка аргументов для индексаторов"""
@@ -204,3 +212,5 @@ class GridGraph:
                     self.edges[edges_idx][point] = self.allocator(value)
         else:
             pass # или бросить исключение
+
+        

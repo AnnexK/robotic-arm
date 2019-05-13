@@ -6,10 +6,11 @@ from common_math import isclose_wrap
 
 import time
 from functools import reduce
-from numpy import abs
-from copy import deepcopy
+from numpy import abs, ndarray
+from copy import copy, deepcopy
 from math import inf
 import random
+import heapq
 
 def metric_angle_diff(R, obj_seq, d):
     """Вычисляет сумму модулей разности углов робота R при перемещении схвата
@@ -93,30 +94,23 @@ class Ant:
         random.seed()
 
         G = self.assoc_graph
+
+        targets = list(G.get_adjacent(self.pos))
+        edges = [G[self.pos, t] for t in targets]
         
-        # сложение точек
-        sum_fun = lambda x, y : (x[0] + y[0], x[1] + y[1], x[2] + y[2])
-        vecs = [(1,0,0),(-1,0,0),(0,1,0),(0,-1,0),(0,0,1),(0,0,-1)]
-
-        # точки, в которые можно попробовать попасть
-        target_points = list(map(sum_fun, [self.pos]*6, vecs))
-
-        # ребра, по которым можно пройти
-        edges = [G[self.pos,t] for t in target_points]
-
         # привлекательности ребер
         attrs = [0.0]
         total_attr = 0.0
         
-        for i in range(0,6):
+        for e in edges:
             # посчитать привлекательность ребра
 
             # ребра нет
-            if edges[i] is None:
+            if e is None:
                 attr = 0.0
             else:
-                attr = edge_attraction(self.base_phero + edges[i].phi,
-                                       edges[i].weight,
+                attr = edge_attraction(self.base_phero + e.phi,
+                                       e.weight,
                                        self.alpha,
                                        self.beta)
             
@@ -128,16 +122,15 @@ class Ant:
         seed = total_attr * random.random()
         
         choice = None
-        for i in range(0,6):
+        for i, a in enumerate(attrs):
             # выбор ребра
-            decision = isclose_wrap(attrs[i], seed)
-            decision = decision or attrs[i]<seed<attrs[i+1]
+            decision = isclose_wrap(a, seed)
+            decision = decision or a<seed<attrs[i+1]
             
-            # если один из вызовов edge_attraction вернул 0.0,
+            # если привлекательность ребра равна 0.0,
             # то можно применить обычное сравнение
-            # для опознания абсолютно непривлекательного ребра
-            decision = decision and not attrs[i] == attrs[i+1]
-            if isclose_wrap(attrs[i], seed) or attrs[i]<seed<attrs[i+1]:
+            decision = decision and not a == attrs[i+1]
+            if isclose_wrap(a, seed) or a<seed<attrs[i+1]:
                 choice = i
                 break
 
@@ -146,9 +139,9 @@ class Ant:
         
         # добавить в стек
         self.path_edges.append(edges[choice]) 
-        self.path_verts.append(target_points[choice])
+        self.path_verts.append(targets[choice])
         self.path_len += edges[choice].weight
-        self.pos = target_points[choice]
+        self.pos = targets[choice]
 
     def distribute_pheromone(self):
         """Распространяет феромон по всем пройденным ребрам"""
@@ -207,9 +200,33 @@ class Solver:
         self.R = deepcopy(R)
         self.objs = obj_seq
 
+    def precalculate_edges_simple(self):
+        G = self.ant_spawner.assoc_graph
+        X = G.x_nedges
+        Y = G.y_nedges
+        Z = G.z_nedges
+        EX = G.edges[0]
+        EY = G.edges[1]
+        EZ = G.edges[2]
+        A = G.allocator
+        start = time.time()
+        for x in range(0, X):
+            for y in range(0, Y):
+                for z in range(0, Z):
+                    # прямой доступ к элементам массива
+                    if x < X - 1:
+                        EX[x,y,z] = A(1.0,0.0)
+                    if y < Y - 1:
+                        EY[x,y,z] = A(1.0,0.0)
+                    if z < Z - 1:
+                        EZ[x,y,z] = A(1.0,0.0)
+        end = time.time()
+        print("precalculation finished, time: ", end-start)
+        
     def precalculate_edges(self):
         G = self.ant_spawner.assoc_graph
-
+        step = G.step
+        
         start = time.time()
         for x in range(0, G.x_nedges):
             for y in range(0, G.y_nedges):
@@ -217,20 +234,26 @@ class Solver:
                     rx, ry, rz = G.grid_to_origin((x, y, z))
                     diff = robot.grip_calculate_angles(self.R, rx, ry, rz)
                     if diff is None:
-                        G[(x,y,z),(x+1,y,z)] = None
-                        G[(x,y,z),(x,y+1,z)] = None
-                        G[(x,y,z),(x,y,z+1)] = None
+                        resx = None
+                        resy = None
+                        resz = None
                     else:
                         self.R.grip_move(diff)
-                        px = G.grid_to_origin((x+1,y,z))
-                        py = G.grid_to_origin((x,y+1,z))
-                        pz = G.grid_to_origin((x,y,z+1))
+                        px = rx+step, ry, rz
+                        py = rx, ry+step, rz
+                        pz = rx, ry, rz+step
                         mx = metric_angle_diff(self.R, self.objs, px)
                         my = metric_angle_diff(self.R, self.objs, py)
                         mz = metric_angle_diff(self.R, self.objs, pz)
-                        G[(x,y,z),(x+1,y,z)] = None if mx is None else mx, 0.0
-                        G[(x,y,z),(x,y+1,z)] = None if my is None else my, 0.0
-                        G[(x,y,z),(x,y,z+1)] = None if mz is None else mz, 0.0
+                        resx = None if mx is None else (mx, 0.0)
+                        resy = None if my is None else (my, 0.0)
+                        resz = None if mz is None else (mz, 0.0)
+                    if x < G.x_nedges - 1:
+                        G.edges[0][x,y,z] = None if resx is None else G.allocator(*resx)
+                    if y < G.y_nedges - 1:
+                        G.edges[1][x,y,z] = None if resy is None else G.allocator(*resy)
+                    if z < G.z_nedges - 1:
+                        G.edges[2][x,y,z] = None if resz is None else G.allocator(*resz)
         end = time.time()
         print("Precalculation finished, time: ", end - start)
     
@@ -272,4 +295,52 @@ class Solver:
         best_est_path = min(best_paths, key=lambda p : p[1])
         return list(map(self.ant_spawner.assoc_graph.grid_to_origin,
                         best_est_path[0])),best_est_path[1]
+
+def dijkstra(G, start, end):
+    X = G.x_nedges + 1
+    Y = G.y_nedges + 1
+    Z = G.z_nedges + 1
+
+    # прямая и обратная ф. для отображения кортежей в числа и наоборот
+    f = lambda t : t[0] + t[1] * X + t[2] * X * Y
+    invf = lambda k : (k % X, (k % (X*Y)) // X, k // (X*Y))
+
+    # расстояния
+    d = [inf for i in range(X*Y*Z)]
+    d[f(start)] = 0.0
+
+    # очередь с приоритетами
+    heap = [(0.0, start)]
+    # предки вершин
+    p = [None for i in range(0, X*Y*Z)]
+
+    cur = None
+    dest = end
+
+    while heap:
+        # достать вершину с минимальным расстоянием из очереди
+        weight, cur = heapq.heappop(heap)
+        if cur == dest: # найден нужный путь
+            break
+
+        for w in G.get_adjacent(cur):
+            # индексы в массиве расстояний
+            fw = f(w)
+            fcur = f(cur)
+            edge = G[cur,w]
+            if edge is not None and d[fw] > d[fcur] + edge.weight:
+                d[fw] = d[fcur] + edge.weight
+                heapq.heappush(heap, (d[fw], w))
+                p[fw] = cur
+
+    path = [dest]
+    i = f(path[0])
+
+    if d[i] == inf:
+        return None
     
+    while p[i] is not None:
+        path.append(p[i])
+        i = f(path[-1])
+    
+    return (d[f(dest)], path)

@@ -1,0 +1,4 @@
+{
+    "urdf_name" : "test-model.urdf",
+    "effector_name" : "effector"
+}

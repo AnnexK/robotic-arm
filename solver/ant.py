@@ -1,3 +1,4 @@
+from math import inf
 import numpy.random as random
 
 def edge_attraction(phi, dist, alpha, beta):
@@ -87,5 +88,3 @@ class Ant:
         self.path_len = 0.0
         
         return ret
-
-

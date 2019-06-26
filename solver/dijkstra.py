@@ -1,3 +1,4 @@
+from math import inf
 import heapq
 
 def dijkstra(G, start, end):

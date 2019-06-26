@@ -31,9 +31,8 @@ class AntSolver:
         """Уменьшение кол-ва феромона"""
         self.ant_spawner.base_phero *= (1 - self.decay)
  
-        for arr in self.ant_spawner.assoc_graph.edges:
-            for e in arr:
-                e.phi *= (1 - self.decay)
+        for e in self.ant_spawner.assoc_graph.edges:
+            e.phi *= (1 - self.decay)
 
     def create_ants(self, amount):
         self.ants = [self.ant_spawner(self.start) for i in range(amount)]
@@ -53,8 +52,7 @@ class AntSolver:
         for i in range(iters):
             print('Iter #', i+1)
             # поиск решения
-            a_num = 1
-            for a in self.ants:
+            for a_num, a in enumerate(self.ants):
                 print('Ant#', a_num)
                 while a.pos != self.end:
                     a.pick_edge()

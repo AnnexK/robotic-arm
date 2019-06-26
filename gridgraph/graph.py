@@ -1,7 +1,7 @@
 from numpy import ndarray
 from functools import reduce
 
-from gridgraph.iterator import GGIterator
+from gridgraph.iterator import EdgeIterator, VertIterator
 from gridgraph.edge import GraphEdge
 
 class GridGraph:
@@ -20,25 +20,31 @@ class GridGraph:
         self.z_nedges = Vz-1
 
         # X, Y, Z
-        self.edges = [ndarray(shape=(Vx-1,Vy,Vz), dtype=object),
-                      ndarray(shape=(Vx,Vy-1,Vz), dtype=object),
-                      ndarray(shape=(Vx,Vy,Vz-1), dtype=object)]
+        self._edges = [ndarray(shape=(Vx-1,Vy,Vz), dtype=object),
+                       ndarray(shape=(Vx,Vy-1,Vz), dtype=object),
+                       ndarray(shape=(Vx,Vy,Vz-1), dtype=object)]
 
-    def __iter__(self):
-        return GGIterator(self)
+    @property
+    def edges(self):
+        return EdgeIterator(self)
 
-    def __vert_in_graph(self, v):
+    @property
+    def vertices(self):
+        return VertIterator(self)
+    
+    def vert_in_graph(self, v):
         return 0 <= v[0] <= self.x_nedges and 0 <= v[1] <= self.y_nedges and 0 <= v[2] <= self.z_nedges
     
     def get_adjacent(self, v):
         """Возвращает список смежных вершин для вершины v"""
-        if not self.__vert_in_graph(v):
+        if not self.vert_in_graph(v):
+            # или выброс исключения
             return None
         
         vecs = [(1,0,0),(-1,0,0),(0,1,0),(0,-1,0),(0,0,1),(0,0,-1)]
 
         # точки, в которые можно попробовать попасть
-        return filter(self.__vert_in_graph, map(GridGraph.__sum_fun, [v]*6, vecs))
+        return filter(self.vert_in_graph, map(GridGraph.__sum_fun, [v]*6, vecs))
     
     def __getitem__(self, v):
         start, end = v[0], v[1]
@@ -47,7 +53,7 @@ class GridGraph:
                 if abs(start[i]-end[i]) == 1:
                     edges_idx = i
                     break
-            return self.edges[edges_idx][min(start,end)]
+            return self._edges[edges_idx][min(start,end)]
         else:
             return None # ребра нет
 
@@ -60,8 +66,8 @@ class GridGraph:
                     edges_idx = i
                     break
             if isinstance(value, tuple):
-                self.edges[edges_idx][min(start,end)] = self.allocator(*value)
+                self._edges[edges_idx][min(start,end)] = self.allocator(*value)
             else:
-                self.edges[edges_idx][min(start,end)] = None if value is None else self.allocator(value)
+                self._edges[edges_idx][min(start,end)] = None if value is None else self.allocator(value)
         else:
             raise KeyError("Вершины не смежны")

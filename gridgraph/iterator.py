@@ -1,6 +1,6 @@
 class EdgeIterator:
     def __init__(self, g):
-        self.e = g.edges # ссылка на массив ребер
+        self.e = g._edges # ссылка на массив ребер
         self.ei = 0 # положение в массиве по параллельности ребер
         self.xc = 0 # текущая координата x
         self.xm = g.x_nedges # макс координата x
@@ -9,6 +9,9 @@ class EdgeIterator:
         self.zc = 0
         self.zm = g.z_nedges
         
+    def __iter__(self):
+        return self
+
     def __next__(self):
         if self.ei == 3:
             raise StopIteration
@@ -30,11 +33,14 @@ class EdgeIterator:
 class VertIterator:
     def __init__(self, g):
         self.cur = -1
-        self.xm = g.x_nedges
-        self.ym = g.y_nedges
-        self.zm = g.z_nedges
+        self.xm = g.x_nedges + 1
+        self.ym = g.y_nedges + 1
+        self.zm = g.z_nedges + 1
         self.c = self.ym * self.zm
     
+    def __iter__(self):
+        return self
+
     def __next__(self):
         self.cur += 1
         if self.cur == self.xm * self.ym * self.zm:

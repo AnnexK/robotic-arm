@@ -25,8 +25,8 @@ class ExampleGraphBuilder:
 
     def make_graph(self):
         ret = GridGraph(self.x, self.y, self.z, PheromoneEdge)
-        for v in ret:
+        for v in ret.vertices:
             for w in ret.get_adjacent(v):
-                if ret[v,w] is not None:
+                if ret[v,w] is None:
                     ret[v,w] = 1.0, 0.0
         return ret

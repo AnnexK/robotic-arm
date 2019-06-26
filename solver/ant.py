@@ -34,8 +34,7 @@ class Ant:
             raise TypeError("Передан не кортеж")
         if not len(value) == 3:
             raise ValueError("Значение не является точкой")
-        # NB : использовать другой метод
-        if not Ant.assoc_graph.grid_to_origin(value):
+        if not Ant.assoc_graph.vert_in_graph(value):
             raise ValueError("Точка не принадлежит графу")
         self._grid_pos = value
 

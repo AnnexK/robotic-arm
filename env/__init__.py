@@ -1,6 +1,7 @@
 import json
 import pybullet
 import os
+import pathlib
 
 from env.robot import Robot
 from env.environment import Environment
@@ -32,27 +33,26 @@ def load_task(filename):
         task_data = json.load(fp, object_hook=task_json_parse)
 
     # получение путей к urdf и sdf файлам
-    path_list = filename.split(os.sep)[:-1:]
-    urdf_filename = os.path.join(os.sep.join(path_list),
-                                 task_data['urdf_name'])
+    
+    urdf_filename = filename.parent / pathlib.Path(task_data['urdf_name'])
+    print(urdf_filename)
     if task_data['sdf_name'] is None:
         sdf_filename = None
     else:
-        sdf_filename = os.path.join(os.sep.join(path_list),
-                                    task_data['sdf_name'])
+        sdf_filename = filename.parent / pathlib.Path(task_data['sdf_name'])
 
     # преобразование считанных из файла RPY углов в кват-н
     q_orn = pybullet.getQuaternionFromEuler(task_data['orn'])
 
     # создание оберток
-    R = Robot(urdf_filename,
+    R = Robot(str(urdf_filename),
               task_data['effector_name'],
               task_data['pos'],
               q_orn,
               task_data['fixed_base'],
               task_data['eps'])
 
-    E = Environment(sdf_filename)
+    E = Environment(None if sdf_filename is None else str(sdf_filename))
 
     return R, E, task_data['endpoint']
 

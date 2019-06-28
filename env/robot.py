@@ -112,8 +112,10 @@ kin_eps -- значение погрешности для решения ОКЗ"
             obj_set |= set(ids)
             
         # узкая фаза
-        contacts = [pb.getContactPoints(self._id, i) for i in obj_set]
-        return len(contacts) == 0
+        contacts = []
+        for o in obj_set:
+            contacts += pb.getContactPoints(self._id, o)
+        return len(contacts) > 0
 
     def get_effector(self):
         """Возвращает координаты центра тяжести рабочего органа"""

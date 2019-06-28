@@ -20,11 +20,13 @@ def task_json_parse(dct):
     if not 'orn' in dct:
         dct['orn'] = (0.0, 0.0, 0.0) # rpy
     if not 'eps' in dct:
-        dct['eps'] = 1e-4
+        dct['eps'] = 1e-4 # 0.1 mm
     if not 'fixed_base' in dct:
         dct['fixed_base'] = True
     if not 'sdf_name' in dct:
         dct['sdf_name'] = None
+    if not 'dofs' in dct:
+        dct['dofs'] = None
     return dct
 
 def load_task(filename):
@@ -52,7 +54,12 @@ def load_task(filename):
               task_data['fixed_base'],
               task_data['eps'])
 
+    # задание начального состояния звеньев
+    if task_data['dofs'] is not None:
+        for i, dof in enumerate(R._dofs):
+            pybullet.resetJointState(R.id, dof, task_data['dofs'][i])
+
     E = Environment(None if sdf_filename is None else str(sdf_filename))
 
-    return R, E, task_data['endpoint']
+    return R, E, task_data['endpoint'], task_data['emp_best']
 

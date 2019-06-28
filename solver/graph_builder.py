@@ -1,7 +1,7 @@
 from gridgraph.graph import GridGraph
 from gridgraph.edge import GraphEdge
 from math import inf, ceil
-import pybullet
+from numpy import ndarray
 
 class PheromoneEdge(GraphEdge):
     """Класс, описывающий ребро графа с дополнительным полем значения феромона"""
@@ -49,13 +49,20 @@ class GraphBuilder:
         vx, vy, vz = (int(ceil(d * self.mult))+1 for d in (dx, dy, dz))
         G = GridGraph(vx, vy, vz, PheromoneEdge)
         print('vertices: {}x{}x{}'.format(vx,vy,vz))
+
+        # функции преобразования из пространства в граф и обратно
         grid_to_space = lambda v : tuple(low_corner[i] + v[i] / self.mult for i in range(3))
         space_to_grid = lambda v : tuple(ceil((v[i] - low_corner[i]) * self.mult) for i in range(3))
 
+        # проверка на доступность вершин
+        legals = ndarray(shape=(vx,vy,vz), dtype=bool)
         for v in G.vertices:
             space_v = grid_to_space(v)
-            legal = self.r.move_to(space_v) and not self.r.check_collisions()
-            for w in filter(lambda x : x > v, G.get_adjacent(v)):
-                G[v,w] = (1.0 if legal else inf), 0.0
+            legals[v] = self.r.move_to(space_v) and not self.r.check_collisions()
+
+        # заполнение графа
+        for v in G.vertices:
+            for w in G.get_adjacent(v):
+                G[v,w] = (1/self.mult if legals[v] and legals[w] else inf), 0.0
         
         return G, space_to_grid(start), space_to_grid(end)

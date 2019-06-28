@@ -2,5 +2,7 @@
     "urdf_name" : "test-model.urdf",
     "sdf_name" : "test-env.sdf",
     "effector_name" : "effector",
-    "endpoint" : [5.6, 3.2, 5.4]
+    "dofs" : [1.57, 1.00, 0.92, 0.357],
+    "endpoint" : [0.72, 0.64, 0.96],
+    "emp_best" : 25.24
 }

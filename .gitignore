@@ -6,8 +6,10 @@
 # pycache #
 __pycache__
 
+# csv output files #
+*.csv
+
 # tests #
 dijkstra-test.py
 precalc_profile.py
-
 build_test.py

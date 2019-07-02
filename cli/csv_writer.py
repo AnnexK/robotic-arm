@@ -18,5 +18,9 @@ class ColumnWriter:
         self.delimiter = delim
 
     def write(self, *data):
-        pass
+        writer = csv.writer(self.fp, delimiter=self.delimiter)
+        # номер итерации и данные в каждой строке
+        writer.writerows(zip(range(1, len(data[0])+1), *data))
 
+    def __del__(self):
+        self.fp.close()

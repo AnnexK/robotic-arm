@@ -50,20 +50,24 @@ class AntSolver:
         avg_paths = []
         
         for i in range(iters):
+            paths = []
             print('Iter #', i+1)
             # поиск решения
             for a_num, a in enumerate(self.ants):
-                print('Ant#', a_num)
+                print('Ant#', a_num+1)
                 while a.pos != self.end:
                     a.pick_edge()
-                print('Ant#', a_num, 'finished, path len:', a.path_len)
+                a.remove_cycles()
+                length = a.path_len
+                print('Ant#', a_num+1, 'finished, path len:', length)
+                paths.append(length)
                 
             # обновление феромона
             self.pheromone_decay()
             for a in self.ants:
                 a.distribute_pheromone()
+                a.unwind_path()
             
-            paths = [a.unwind_path() for a in self.ants]
             best_paths.append(min(paths))
             worst_paths.append(max(paths))
             avg_paths.append(sum(paths)/ants_n)

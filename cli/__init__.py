@@ -4,6 +4,7 @@ import env
 import solver
 import csv
 import pathlib
+import writer
 
 def main():
     """Основная функция программы"""
@@ -18,10 +19,6 @@ def main():
     print('Solving...')
     best, worst, avg = S.solve(args.iters, args.ant_num)
 
-    with open(args.output, 'w', newline='') as out:
-        writer = csv.writer(out)
-        writer.writerow(best)
-        writer.writerow(worst)
-        writer.writerow(avg)
-        # нижний предел
-        writer.writerow([emp_best] * args.iters)
+    w = writer.ColumnWriter(open(args.output, 'w', newline=''), ' ')
+    w.write(best, worst, avg, [emp_best] * args.iters)
+    del w # закрыть связанный файл

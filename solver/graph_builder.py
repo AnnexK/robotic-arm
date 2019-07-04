@@ -1,7 +1,6 @@
 from gridgraph.graph import GridGraph
 from gridgraph.edge import GraphEdge
-from math import inf, ceil
-from numpy import ndarray
+from numpy import ndarray, inf, ceil
 
 class PheromoneEdge(GraphEdge):
     """Класс, описывающий ребро графа с дополнительным полем значения феромона"""

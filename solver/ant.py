@@ -1,4 +1,4 @@
-from math import inf
+from numpy import inf
 import numpy.random as random
 
 def edge_attraction(phi, dist, alpha, beta):
@@ -11,9 +11,6 @@ class AntPath:
             self.d = data
             self.next = self if next is None else next
             self.prev = self if prev is None else prev
-
-        def is_sentinel(self):
-            return self.d is None
         
     def __init__(self, v):
         self.sent = AntPath.PathNode()

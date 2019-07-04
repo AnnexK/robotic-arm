@@ -1,7 +1,6 @@
 import pybullet as pb
 from math import isclose
 import json
-import os
 
 class Robot:
     """Обертка над объектом pybullet, содержащая информацию

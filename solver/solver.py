@@ -2,11 +2,9 @@ from gridgraph.graph import GridGraph
 from gridgraph.edge import GraphEdge
 from solver.ant import Ant
 
-import time
 import numpy.random as nprand
 from functools import reduce
-from numpy import abs, ndarray
-from math import inf
+from numpy import abs, ndarray, inf
 
 class AntSolver:
     """Класс, моделирующий решение задачи"""

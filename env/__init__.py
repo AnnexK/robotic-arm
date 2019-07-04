@@ -1,6 +1,5 @@
 import json
 import pybullet
-import os
 import pathlib
 
 from env.robot import Robot

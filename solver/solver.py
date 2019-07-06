@@ -1,6 +1,6 @@
 from gridgraph.graph import GridGraph
 from gridgraph.edge import GraphEdge
-from solver.ant import Ant
+from solver.ant import AntFactory
 
 import numpy.random as nprand
 from functools import reduce
@@ -10,15 +10,10 @@ class AntSolver:
     """Класс, моделирующий решение задачи"""
     def __init__(self,
                  G, start, end,
-                 a=1.0, b=1.0, q=1.0, rho=0.01,
-                 base_pheromone=0.1):
+                 a=1.0, b=1.0, q=1.0, rho=0.01):
     
-        self.ant_spawner = Ant
-        self.ant_spawner.alpha = a
-        self.ant_spawner.assoc_graph = G
-        self.ant_spawner.beta = b
-        self.ant_spawner.Q = q
-        self.ant_spawner.base_phero = base_pheromone
+        self.graph = G
+        self.ant_spawner = AntFactory(a, b, q, G, start)
         self.decay = rho
         
         # добавить определение начальных и конечных точек
@@ -27,21 +22,16 @@ class AntSolver:
    
     def pheromone_decay(self):
         """Уменьшение кол-ва феромона"""
-        self.ant_spawner.base_phero *= (1 - self.decay)
- 
-        for e in self.ant_spawner.assoc_graph.edges:
+        for e in self.graph.edges:
             e.phi *= (1 - self.decay)
 
-    def create_ants(self, amount):
-        self.ants = [self.ant_spawner(self.start) for i in range(amount)]
-    
     def solve(self, iters=1, ants_n=20):
 
         nprand.seed()
         # создаем муравьев один раз,
         # а потом в каждой итерации откатываем их состояние
         # к начальному        
-        self.create_ants(ants_n)
+        ants = self.ant_spawner.make_ants(ants_n)
         
         best_paths = []
         worst_paths = []
@@ -51,7 +41,7 @@ class AntSolver:
             paths = []
             print('Iter #', i+1)
             # поиск решения
-            for a_num, a in enumerate(self.ants):
+            for a_num, a in enumerate(ants):
                 print('Ant#', a_num+1)
                 while a.pos != self.end:
                     a.pick_edge()
@@ -62,7 +52,7 @@ class AntSolver:
                 
             # обновление феромона
             self.pheromone_decay()
-            for a in self.ants:
+            for a in ants:
                 a.distribute_pheromone()
                 a.unwind_path()
             

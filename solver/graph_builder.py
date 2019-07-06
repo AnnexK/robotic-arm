@@ -18,25 +18,31 @@ class PheromoneEdge(GraphEdge):
             raise ValueError("Количество феромона не может быть отрицательным")
         self._pheromones = value
 
+
 class ExampleGraphBuilder:
-    def __init__(self, x, y, z):
+    def __init__(self, x, y, z, s, e, base):
         self.x = x
         self.y = y
         self.z = z
+        self.start = s
+        self.end = e
+        self.phi = base
 
     def make_graph(self):
         ret = GridGraph(self.x, self.y, self.z, PheromoneEdge)
         for v in ret.vertices:
             for w in ret.get_adjacent(v):
                 if ret[v,w] is None:
-                    ret[v,w] = 1.0, 0.0
-        return ret
+                    ret[v,w] = 1.0, self.phi
+        return ret, self.start, self.end
+
 
 class GraphBuilder:
-    def __init__(self, R, Env, Endpoint):
+    def __init__(self, R, Env, Endpoint, base):
         self.r = R
         self.e = Env
         self.end = Endpoint
+        self.phi = base
         self.mult = 100 # обратное к 1/100
 
     def make_graph(self):
@@ -62,6 +68,6 @@ class GraphBuilder:
         # заполнение графа
         for v in G.vertices:
             for w in G.get_adjacent(v):
-                G[v,w] = (1/self.mult if legals[v] and legals[w] else inf), 0.0
+                G[v,w] = (1/self.mult if legals[v] and legals[w] else inf), self.phi
         
         return G, space_to_grid(start), space_to_grid(end)

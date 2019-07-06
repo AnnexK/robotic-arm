@@ -39,22 +39,6 @@ class AntPath:
         self.sent.next = self.sent
 
 
-class AntFactory:
-    def __init__(self, a, b, Q, G, pos):
-        self.alpha = a
-        self.beta = b
-        self.qual = Q
-        self.graph = G
-        self.pos = pos
-        
-    def make_ants(self, amount):
-        return [Ant(self.alpha,
-                    self.beta,
-                    self.qual,
-                    self.graph,
-                    self.pos) for i in range(amount)]
-
-
 class Ant:
     """Класс, моделирующий поведение муравья"""
     def __init__(self, a, b, Q, G, pos):

@@ -37,27 +37,36 @@ class AntPath:
     def clear(self):
         self.sent.prev = self.sent
         self.sent.next = self.sent
-    
+
+
+class AntFactory:
+    def __init__(self, a, b, Q, G, pos):
+        self.alpha = a
+        self.beta = b
+        self.qual = Q
+        self.graph = G
+        self.pos = pos
+        
+    def make_ants(self, amount):
+        return [Ant(self.alpha,
+                    self.beta,
+                    self.qual,
+                    self.graph,
+                    self.pos) for i in range(amount)]
+
+
 class Ant:
     """Класс, моделирующий поведение муравья"""
-    # коэф привлекательности по феромону
-    alpha = 0.0
-    # коэф привлекательности по длине ребра
-    beta = 0.0
-    # базовый уровень феромона
-    base_phero = 0.0
-    # граф, в котором происходит поиск решения (reference)
-    assoc_graph = None
-    # сколько всего феромона откладывает муравей
-    Q = 1.0
-    
-    def __init__(self, pos):
-        self.pos = pos # текущее положение в сетке
+    def __init__(self, a, b, Q, G, pos):
+        self.alpha = a
+        self.beta = b
+        self.Q = Q
+        self.assoc_graph = G
         self.path = AntPath(pos)
 
     @property
     def pos(self):
-        return self._grid_pos
+        return self.path.end.d
 
     @pos.setter
     def pos(self, value):
@@ -65,9 +74,9 @@ class Ant:
             raise TypeError("Передан не кортеж")
         if not len(value) == 3:
             raise ValueError("Значение не является точкой")
-        if not Ant.assoc_graph.vert_in_graph(value):
+        if not self.assoc_graph.vert_in_graph(value):
             raise ValueError("Точка не принадлежит графу")
-        self._grid_pos = value
+        self.path.append(value)
 
     @property
     def path_len(self):
@@ -87,7 +96,7 @@ class Ant:
         edges = [G[self.pos, t] for t in targets]
         
         # привлекательности ребер
-        attr = [edge_attraction(self.base_phero + e.phi,
+        attr = [edge_attraction(e.phi,
                                 e.weight,
                                 self.alpha,
                                 self.beta)
@@ -102,7 +111,6 @@ class Ant:
         choice = random.choice(len(edges), p=attr)
         
         # добавить в путь
-        self.path.append(targets[choice])
         self.pos = targets[choice]
 
     def remove_cycles(self):
@@ -129,6 +137,6 @@ class Ant:
     def unwind_path(self):
         """Возвращает муравья к начальному состоянию"""
 
-        self.pos = self.path.start.d
+        pos = self.path.start.d
         self.path.clear()
-        self.path.append(self.pos)
+        self.path.append(pos)

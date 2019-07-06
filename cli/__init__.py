@@ -14,8 +14,8 @@ def main():
     print('Loading task...')
     Robot, Env, End, emp_best = env.load_task(pathlib.Path(args.task))
     print('Building graph...')
-    G, start, end = solver.GraphBuilder(Robot, Env, End).make_graph()
-    S = solver.AntSolver(G, start, end, args.alpha, args.beta, args.ant_power, args.decay, args.phi)
+    G, start, end = solver.GraphBuilder(Robot, Env, End, args.phi).make_graph()
+    S = solver.AntSolver(G, start, end, args.alpha, args.beta, args.ant_power, args.decay)
     print('Solving...')
     best, worst, avg = S.solve(args.iters, args.ant_num)
 

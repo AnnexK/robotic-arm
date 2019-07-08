@@ -109,7 +109,7 @@ class Ant:
                 cur_right = cur_right.prev
             cur_left = cur_left.next
 
-    def distribute_pheromone(self):
+    def deposit_pheromone(self):
         """Распространяет феромон по всем пройденным ребрам"""
         phi = self.Q / self.path_len
         

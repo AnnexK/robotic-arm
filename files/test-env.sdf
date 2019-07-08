@@ -1,0 +1,127 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="scene">
+    <model name="box1">
+      <link name="box_world_link"/>
+      <link name="box_link">
+        <pose>0.5 1 1.5 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="box_visual">
+          <geometry>
+            <box>
+              <size>1 2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 1 0 1</ambient>
+          </material>      
+        </visual>
+        <collision name="box_col">
+          <geometry>
+            <box>
+              <size>1 2 3</size>
+            </box>
+          </geometry>
+        </collision>
+        <inertial>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+          <mass>10000000000000000.0</mass>
+        </inertial>
+      </link>
+      <joint name="box_base" type="fixed">
+        <parent>box_world_link</parent>
+        <child>box_link</child>
+      </joint>
+      
+    </model>
+
+    <model name="ball1">
+      <link name="ball_world_link"/>
+      <link name="ball_link">
+        <gravity>0</gravity>
+        <pose>5 5 5 0 0 0</pose>
+        <visual name="ball_visual">
+          <geometry>
+            <sphere>
+              <radius>1.3</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <ambient>0 1 1 1</ambient>
+          </material>      
+        </visual>
+        <collision name="ball_col">
+          <geometry>
+            <sphere>
+              <radius>1.3</radius>
+            </sphere>
+          </geometry>
+        </collision>
+        <inertial>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+          <mass>10000000000000000.0</mass>
+        </inertial>
+      </link>
+      <joint name="ball_base" type="fixed">
+        <parent>ball_world_link</parent>
+        <child>ball_link</child>
+      </joint>
+    </model>
+    
+    <model name="floor">
+      <link name="floor_world_link"/>
+      <link name="floor_link">
+        <pose>0 0 -0.1 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="floor_visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1 1 1 0.1</ambient>
+          </material>
+        </visual>
+        <collision name="floor_col">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+        </collision>
+        <inertial>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+          <mass>10000000000000000.0</mass>
+        </inertial>
+      </link>
+      <joint name="floor_base" type="fixed">
+        <parent>floor_world_link</parent>
+        <child>floor_link</child>
+      </joint>
+    </model>
+  </world>
+</sdf>

@@ -36,7 +36,6 @@ def load_task(filename):
     # получение путей к urdf и sdf файлам
     
     urdf_filename = filename.parent / pathlib.Path(task_data['urdf_name'])
-    print(urdf_filename)
     if task_data['sdf_name'] is None:
         sdf_filename = None
     else:

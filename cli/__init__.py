@@ -1,4 +1,4 @@
-from cli.arg_parser import make_parser
+from cli.arg_parser import make_parser, check_args
 
 import env
 import solver
@@ -10,7 +10,9 @@ def main():
     """Основная функция программы"""
     parser = make_parser()
     args = parser.parse_args()
-    
+    if not check_args(args):
+        raise ValueError('one of the args has wrong value')
+        
     print('Loading task...')
     Robot, Env, End, emp_best = env.load_task(pathlib.Path(args.task))
     print('Building graph...')

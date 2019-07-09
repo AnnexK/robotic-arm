@@ -11,7 +11,10 @@ filename -- имя SDF-файла (абсолютный путь)
         if filename is None:
             self._ids = list() # пустой
         else:
-            self._ids = pb.loadSDF(filename)
+            try:
+                self._ids = pb.loadSDF(filename)
+            except pb.error:
+                raise ValueError('failed to read SDF file')
 
     def __getitem__(self, i):
         """Возвращает идентификатор PB i-го объекта"""

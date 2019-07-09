@@ -1,4 +1,5 @@
 import argparse
+from functools import reduce
 
 def make_parser():
     ret = argparse.ArgumentParser(description='Launch the solver with arguments specified')
@@ -12,3 +13,14 @@ def make_parser():
     ret.add_argument('-k', '--ant-num', help='amount of ants', type=int, default=1)
     ret.add_argument('-i', '--iters', help='amount of algorithm iterations', type=int, default=1)
     return ret
+
+def check_args(args):
+    tests = [args.alpha >= 0.0,
+             args.beta >= 0.0,
+             args.phi > 0.0,
+             args.decay > 0.0 and args.decay < 1.0,
+             args.ant_power > 0.0,
+             args.ant_num > 0,
+             args.iters > 0]
+
+    return reduce(lambda x, y : x and y, tests, True)

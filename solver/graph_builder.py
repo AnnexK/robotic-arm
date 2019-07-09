@@ -2,22 +2,6 @@ from gridgraph.graph import GridGraph
 from gridgraph.edge import GraphEdge
 from numpy import ndarray, inf, ceil
 
-class PheromoneEdge(GraphEdge):
-    """Класс, описывающий ребро графа с дополнительным полем значения феромона"""
-    def __init__(self, w=0.0, phi=0.0):
-        super().__init__(w)
-        self._pheromones = phi
-
-    @property
-    def phi(self):
-        return self._pheromones
-
-    @phi.setter
-    def phi(self, value):
-        if value < 0.0:
-            raise ValueError("Количество феромона не может быть отрицательным")
-        self._pheromones = value
-
 
 class ExampleGraphBuilder:
     def __init__(self, x, y, z, s, e, base):
@@ -29,7 +13,7 @@ class ExampleGraphBuilder:
         self.phi = base
 
     def make_graph(self):
-        ret = GridGraph(self.x, self.y, self.z, PheromoneEdge)
+        ret = GridGraph(self.x, self.y, self.z)
         for v in ret.vertices:
             for w in ret.get_adjacent(v):
                 if ret[v,w] is None:
@@ -52,7 +36,7 @@ class GraphBuilder:
         high_corner = tuple(max(start[i], end[i]) for i in range(3))
         dx, dy, dz = (high_corner[i]-low_corner[i] for i in range(3))
         vx, vy, vz = (int(ceil(d * self.mult))+1 for d in (dx, dy, dz))
-        G = GridGraph(vx, vy, vz, PheromoneEdge)
+        G = GridGraph(vx, vy, vz)
         print('vertices: {}x{}x{}'.format(vx,vy,vz))
 
         # функции преобразования из пространства в граф и обратно

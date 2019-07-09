@@ -1,11 +1,14 @@
 class GraphEdge:
-    def __init__(self, w=0.0):
-        self._weight = w
+    def __init__(self, w, phi):
+        self.weight = w
+        self._phi = phi
 
     @property
-    def weight(self):
-        return self._weight
+    def phi(self):
+        return self._phi
 
-    @weight.setter
-    def weight(self, value):
-        self._weight = value
+    @phi.setter
+    def phi(self, value):
+        if value <= 0.0:
+            raise ValueError('Assigned pheromone too low')
+        self._phi = value

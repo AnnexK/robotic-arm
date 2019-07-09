@@ -9,11 +9,9 @@ class GridGraph:
     def __sum_fun(x, y):
         return x[0]+y[0], x[1]+y[1], x[2]+y[2]
     
-    def __init__(self, Vx, Vy, Vz, edge_type=GraphEdge):
+    def __init__(self, Vx, Vy, Vz):
         """Инициализировать граф с количеством вершин Vx, Vy, Vz"""
 
-        self.allocator = edge_type
-                
         # количество ребер в каждой размерности
         self.x_nedges = Vx-1
         self.y_nedges = Vy-1
@@ -65,9 +63,6 @@ class GridGraph:
                 if abs(start[i]-end[i]) == 1:
                     edges_idx = i
                     break
-            if isinstance(value, tuple):
-                self._edges[edges_idx][min(start,end)] = self.allocator(*value)
-            else:
-                self._edges[edges_idx][min(start,end)] = None if value is None else self.allocator(value)
+            self._edges[edges_idx][min(start,end)] = GraphEdge(value[0], value[1])
         else:
             raise KeyError("Вершины не смежны")

@@ -16,21 +16,27 @@ orn -- ориентация базового звена (кватернион)
 fixed -- флаг фиксирования положения базы (0/1)
 kin_eps -- значение погрешности для решения ОКЗ"""
         # читаем urdf файл
-        self._id = pb.loadURDF(filename,
-                               basePosition=pos,
-                               baseOrientation=orn,
-                               flags=pb.URDF_USE_SELF_COLLISION,
-                               useFixedBase=fixed)
+        try:
+            self._id = pb.loadURDF(filename,
+                                   basePosition=pos,
+                                   baseOrientation=orn,
+                                   flags=pb.URDF_USE_SELF_COLLISION,
+                                   useFixedBase=fixed)
+        except pb.error as err:
+            raise ValueError('failed to read urdf file') from err
 
         self.__kin_eps = kin_eps
 
+        try:
         # достаем индекс звена-схвата
-        self._eff_id = filter(
-            lambda j : j[12].decode() == eff_name,
-            [pb.getJointInfo(self._id,i)
-             for i in range(pb.getNumJoints(self._id))]
-        ).__next__()[0]
-
+            self._eff_id = filter(
+                lambda j : j[12].decode() == eff_name,
+                [pb.getJointInfo(self._id,i)
+                for i in range(pb.getNumJoints(self._id))]
+            ).__next__()[0]
+        except StopIteration:
+            raise ValueError('effector with name {} not found'.format(eff_name))
+            
         # получаем список индексов звеньев со степенями свободы
         self._dofs = getDOFIds(self._id)
         

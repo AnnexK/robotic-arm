@@ -1,3 +1,3 @@
 from gridgraph.graph import GridGraph
-from gridgraph.edge import GraphEdge
+from gridgraph.weight import ConstWeight
 

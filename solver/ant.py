@@ -1,9 +1,11 @@
 from numpy import inf
 import numpy.random as random
 
-def edge_attraction(phi, dist, alpha, beta):
+def edge_attraction(edge, alpha, beta):
     """Вычисляет привлекательность ребра по формуле"""
-    return phi ** alpha * (1 / dist) ** beta
+    if edge[0] == inf:
+        return 0.0
+    return edge[1] ** alpha * (1 / edge[0]) ** beta
 
 class AntPath:
     class PathNode:
@@ -46,20 +48,14 @@ class Ant:
         self.beta = b
         self.Q = Q
         self.assoc_graph = G
-        self.path = AntPath(pos)
+        self.path = AntPath((pos,0.0))
 
     @property
     def pos(self):
-        return self.path.end.d
+        return self.path.end.d[0]
 
     @pos.setter
     def pos(self, value):
-        if not isinstance(value, tuple):
-            raise TypeError("Передан не кортеж")
-        if not len(value) == 3:
-            raise ValueError("Значение не является точкой")
-        if not self.assoc_graph.vert_in_graph(value):
-            raise ValueError("Точка не принадлежит графу")
         self.path.append(value)
 
     @property
@@ -67,7 +63,7 @@ class Ant:
         ret = 0.0
         n = self.path.start
         while n != self.path.end:
-            ret += self.assoc_graph[n.d, n.next.d].weight
+            ret += self.assoc_graph.get_weight(n.d[0], n.next.d[0])
             n = n.next
         return ret
 
@@ -77,15 +73,14 @@ class Ant:
         G = self.assoc_graph
 
         targets = list(G.get_adjacent(self.pos))
-        edges = [G[self.pos, t] for t in targets]
+        # следует переделать в объект
+        edges = [(G.get_weight(self.pos, t), G.get_phi(self.pos,t))
+                 for t in targets]
         
         # привлекательности ребер
-        attr = [edge_attraction(e.phi,
-                                e.weight,
+        attr = [edge_attraction(e,
                                 self.alpha,
                                 self.beta)
-                if e.weight != inf # inf значит ребра нет
-                else 0.0
                 for e in edges]
         
         total_attr = sum(attr)
@@ -95,7 +90,7 @@ class Ant:
         choice = random.choice(len(edges), p=attr)
         
         # добавить в путь
-        self.pos = targets[choice]
+        self.pos = targets[choice], edges[choice][0]
 
     def remove_cycles(self):
         """Извлекает циклы из пути"""
@@ -103,7 +98,7 @@ class Ant:
         while cur_left != self.path.end:
             cur_right = self.path.end
             while cur_right != cur_left:
-                if cur_left.d == cur_right.d:
+                if cur_left.d[0] == cur_right.d[0]:
                     self.path.extract(cur_left.next, cur_right)
                     break
                 cur_right = cur_right.prev
@@ -111,11 +106,13 @@ class Ant:
 
     def deposit_pheromone(self):
         """Распространяет феромон по всем пройденным ребрам"""
+        G = self.assoc_graph
         phi = self.Q / self.path_len
         
         n = self.path.start
         while n != self.path.end:
-            self.assoc_graph[n.d,n.next.d].phi += phi
+            old = G.get_phi(n.d[0], n.next.d[0])
+            G.set_phi(n.d[0], n.next.d[0], old+phi)
             n = n.next
 
     def unwind_path(self):

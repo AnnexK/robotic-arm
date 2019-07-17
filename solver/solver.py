@@ -1,5 +1,4 @@
 from gridgraph.graph import GridGraph
-from gridgraph.edge import GraphEdge
 
 from functools import reduce
 from numpy import abs, ndarray, inf

@@ -29,12 +29,12 @@ class SimpleACO:
 
     def update_pheromone(self):
         # испарение
-        for e in self.graph.edges:
-            e.phi *= (1 - self.rate)
+        self.graph.evaporate(self.rate)
         # отложение
         for a in self.ants:
             a.deposit_pheromone()
             a.unwind_path()
 
     def daemon_actions(self):
-        pass # нечего делать
+        if hasattr(self.graph.weight_calculator, 'reset'):
+            self.graph.weight_calculator.reset()

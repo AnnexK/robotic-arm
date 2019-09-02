@@ -7,3 +7,6 @@ class ConstWeight:
     
     def set(self, v, w, val):
         raise NotImplementedError('Assigning to const weight')
+
+    def reset(self):
+        pass # не нужно

@@ -36,5 +36,4 @@ class SimpleACO:
             a.unwind_path()
 
     def daemon_actions(self):
-        if hasattr(self.graph.weight_calculator, 'reset'):
-            self.graph.weight_calculator.reset()
+        self.graph.weight_calculator.reset()

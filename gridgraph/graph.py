@@ -64,13 +64,13 @@ class GridGraph:
         else:
             return None
 
-    def set_phi(self, v, w, val):
+    def add_phi(self, v, w, val):
         if w in self.get_adjacent(v):
             for i in range(3):
                 if abs(v[i]-w[i]) == 1:
                     index = i
                     break
-            self._phi[index][min(v,w)] = val
+            self._phi[index][min(v,w)] += val
         else:
             raise ValueError('Vertices not adjacent')
 

@@ -111,8 +111,7 @@ class Ant:
         
         n = self.path.start
         while n != self.path.end:
-            old = G.get_phi(n.d[0], n.next.d[0])
-            G.set_phi(n.d[0], n.next.d[0], old+phi)
+            G.add_phi(n.d[0], n.next.d[0], phi)
             n = n.next
 
     def unwind_path(self):

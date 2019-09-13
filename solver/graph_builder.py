@@ -1,5 +1,5 @@
 from gridgraph.graph import GridGraph
-from gridgraph import ConstWeight
+from gridgraph.weight import BoundedConstWeight
 from numpy import ndarray, inf, ceil
 
 
@@ -13,5 +13,5 @@ class ExampleGraphBuilder:
         self.phi = base
 
     def make_graph(self):
-        ret = GridGraph(self.x, self.y, self.z, ConstWeight(), self.phi)
+        ret = GridGraph(BoundedConstWeight(self.x, self.y, self.z, 1.0), self.phi)
         return ret, self.start, self.end

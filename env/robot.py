@@ -58,6 +58,10 @@ kin_eps -- значение погрешности для решения ОКЗ"
     def eff_id(self):
         return self._eff_id
 
+    @property
+    def kin_eps(self):
+        return self.__kin_eps
+    
     def move_to(self, pos, orn=None):
         """Перемещает схват робота в pos с ориентацией orn
 Возвращает true, если перемещение удалось

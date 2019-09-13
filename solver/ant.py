@@ -62,8 +62,8 @@ class Ant:
     def path_len(self):
         ret = 0.0
         n = self.path.start
-        while n != self.path.end:
-            ret += self.assoc_graph.get_weight(n.d[0], n.next.d[0])
+        while n != self.path.sent:
+            ret += n.d[1]
             n = n.next
         return ret
 
@@ -89,7 +89,7 @@ class Ant:
         # случайный выбор тут
         choice = random.choice(len(edges), p=attr)
         
-        # добавить в путь
+        # добавить в путь (вершина, вес)
         self.pos = targets[choice], edges[choice][0]
 
     def remove_cycles(self):

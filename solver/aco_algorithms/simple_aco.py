@@ -15,7 +15,9 @@ class SimpleACO:
         if self.proto_ant is None:
             raise TypeError('No ant specified')
 
-        self.ants = [deepcopy(self.proto_ant) for i in range(amount)]
+        if self.ants is None:
+            self.ants = [deepcopy(self.proto_ant)
+                         for i in range(amount)]
 
     def generate_solutions(self):
         lens = []
@@ -38,7 +40,7 @@ class SimpleACO:
         # отложение
         for a in self.ants:
             a.deposit_pheromone()
-            a.unwind_path()
+            a.reset()
 
     def daemon_actions(self):
         pass

@@ -1,23 +1,24 @@
-import solver
 import writer
+from solver.ants.ant import Ant
+from solver.aco_algorithms.simple_aco import SimpleACO
+from solver.solver import AntSolver
+
+from solver.graph_builder import ExampleGraphBuilder
 
 print('Building graph...')
-G, start, end = solver.ExampleGraphBuilder(30,30,30,
-                                           s=(10,2,3),
-                                           e=(15,22,25),
-                                           base=0.01).make_graph()
+G, start, end = ExampleGraphBuilder(
+    30, 30, 30,
+    (10, 2, 3),
+    (22, 14, 28),
+    1e-5).make_graph()
 
-S = solver.AntSolver(solver.SimpleACO(G, start, end,
-                                      a=1.0,
-                                      b=1.0,
-                                      q=5.0,
-                                      decay=0.01))
+a = Ant(1.0, 1.0, 1.0, G, start)
+S = SimpleACO(G, end, 1e-2)
+S.set_proto(a)
 
+sol = AntSolver(S)
 print('Solving...')
-best, worst, avg = S.solve(iters=50, ants_n=64)
+best, worst, average = sol.solve(iters=50, ants_n=64)
 
-name = input('Input file name to save:')
-
-w = writer.ColumnWriter(open(name, 'w', newline=''), ' ')
-w.write(best,worst,avg)
-del w # закрытие файла
+with writer.ColumnWriter('simple.csv', ' ') as w:
+    w.write(best, worst, average)

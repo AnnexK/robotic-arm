@@ -1,11 +1,13 @@
 from numpy import inf
 import numpy.random as random
 
+
 def edge_attraction(edge, alpha, beta):
     """Вычисляет привлекательность ребра по формуле"""
     if edge[0] == inf:
         return 0.0
     return edge[1] ** alpha * (1 / edge[0]) ** beta
+
 
 class AntPath:
     class PathNode:
@@ -13,7 +15,7 @@ class AntPath:
             self.d = data
             self.next = self if next is None else next
             self.prev = self if prev is None else prev
-        
+
     def __init__(self, v):
         self.sent = AntPath.PathNode()
         self.sent.next = AntPath.PathNode(v, self.sent, self.sent)
@@ -31,7 +33,7 @@ class AntPath:
         new = AntPath.PathNode(v, self.end, self.sent)
         self.end.next = new
         self.sent.prev = new
-    
+
     def extract(self, start, end):
         start.prev.next = end.next
         end.next.prev = start.prev
@@ -48,7 +50,7 @@ class Ant:
         self.beta = b
         self.Q = Q
         self.assoc_graph = G
-        self.path = AntPath((pos,0.0))
+        self.path = AntPath((pos, 0.0))
 
     @property
     def pos(self):
@@ -74,21 +76,21 @@ class Ant:
 
         targets = list(G.get_adjacent(self.pos))
         # следует переделать в объект
-        edges = [(G.get_weight(self.pos, t), G.get_phi(self.pos,t))
+        edges = [(G.get_weight(self.pos, t), G.get_phi(self.pos, t))
                  for t in targets]
-        
+
         # привлекательности ребер
         attr = [edge_attraction(e,
                                 self.alpha,
                                 self.beta)
                 for e in edges]
-        
+
         total_attr = sum(attr)
         attr = [a / total_attr for a in attr]
-        
+
         # случайный выбор тут
         choice = random.choice(len(edges), p=attr)
-        
+
         # добавить в путь (вершина, вес)
         self.pos = targets[choice], edges[choice][0]
 
@@ -108,13 +110,13 @@ class Ant:
         """Распространяет феромон по всем пройденным ребрам"""
         G = self.assoc_graph
         phi = self.Q / self.path_len
-        
+
         n = self.path.start
         while n != self.path.end:
             G.add_phi(n.d[0], n.next.d[0], phi)
             n = n.next
 
-    def unwind_path(self):
+    def reset(self):
         """Возвращает муравья к начальному состоянию"""
 
         pos = self.path.start.d

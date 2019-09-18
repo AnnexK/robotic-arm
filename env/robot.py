@@ -1,6 +1,7 @@
 import pybullet as pb
 from math import isclose
-import json
+# import json
+
 
 class Robot:
     """Обертка над объектом pybullet, содержащая информацию
@@ -25,21 +26,22 @@ kin_eps -- значение погрешности для решения ОКЗ"
         except pb.error as err:
             raise ValueError('failed to read urdf file') from err
 
-        self.__kin_eps = kin_eps
+        self._kin_eps = kin_eps
 
         try:
-        # достаем индекс звена-схвата
+            # достаем индекс звена-схвата
             self._eff_id = filter(
-                lambda j : j[12].decode() == eff_name,
-                [pb.getJointInfo(self._id,i)
-                for i in range(pb.getNumJoints(self._id))]
+                lambda j: j[12].decode() == eff_name,
+                [pb.getJointInfo(self._id, i)
+                 for i in range(pb.getNumJoints(self._id))]
             ).__next__()[0]
         except StopIteration:
-            raise ValueError('effector with name {} not found'.format(eff_name))
-            
+            raise ValueError(
+                'effector with name {} not found'.format(eff_name))
+
         # получаем список индексов звеньев со степенями свободы
         self._dofs = getDOFIds(self._id)
-        
+
     def __del__(self):
         """Предназначено для освобождения ресурсов pybullet"""
         try:
@@ -60,43 +62,50 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
     @property
     def kin_eps(self):
-        return self.__kin_eps
-    
+        return self._kin_eps
+
+    @property
+    def state(self):
+        return [pb.getJointState(self.id, i)[0] for i in self._dofs]
+
+    @state.setter
+    def state(self, val):
+        if len(val) != len(self._dofs):
+            raise ValueError('Wrong number of DoFs')
+
+        for i, joint in enumerate(self._dofs):
+            pb.resetJointState(self.id, joint, val[i])
+        pb.stepSimulation()
+
     def move_to(self, pos, orn=None):
         """Перемещает схват робота в pos с ориентацией orn
 Возвращает true, если перемещение удалось
 Отменяет перемещение и возвращает false, если перемещение не
 удалось"""
         # сохранение первоначального положения
-        start_joints = [pb.getJointState(self.id, i)[0] for i in self._dofs]
+        start_joints = self.state
 
         # значение для orn по умолчанию неизвестно
         if orn is None:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos,
                                                maxNumIterations=100,
-                                               residualThreshold=self.__kin_eps)
+                                               residualThreshold=self._kin_eps)
         else:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos, orn,
                                                maxNumIterations=100,
-                                               residualThreshold=self.__kin_eps)
+                                               residualThreshold=self._kin_eps)
 
         # задание полученного положения
-        for i, joint in enumerate(self._dofs):
-            pb.resetJointState(self.id, joint, IK[i])
-        pb.stepSimulation()
-
+        self.state = IK
         # проверка полученного решения
         new_pos = self.get_effector()
         if not (isclose(new_pos[0], pos[0], abs_tol=self.__kin_eps) and
                 isclose(new_pos[1], pos[1], abs_tol=self.__kin_eps) and
                 isclose(new_pos[2], pos[2], abs_tol=self.__kin_eps)):
-            for i, joint in enumerate(self._dofs):
-                pb.resetJointState(self.id, joint, start_joints[i])
-            pb.stepSimulation()
+            self.state = start_joints
             return False
-            
         return True
-    
+
     def check_collisions(self):
         """Проверяет объект робота на пересечения с объектами внешней
 среды и самопересечения
@@ -106,20 +115,21 @@ kin_eps -- значение погрешности для решения ОКЗ"
         # множество объектов, для которых необходима обработка
         # в узкой фазе
         obj_set = set()
-        
+
         # широкая фаза
         for i in range(-1, pb.getNumJoints(self._id)):
             # координаты AABB
             box_min, box_max = pb.getAABB(self._id, i)
-            
+
             # getOverlappingObjects возвращает кортежи,
             # первый элемент которых -- id объекта,
             # а второй -- id "звеньев" объекта
             # нужен только первый элемент
             ids = [obj[0]
-                   for obj in pb.getOverlappingObjects(box_min, box_max)]
+                   for obj in
+                   pb.getOverlappingObjects(box_min, box_max)]
             obj_set |= set(ids)
-            
+
         # узкая фаза
         contacts = []
         for o in obj_set:
@@ -129,7 +139,8 @@ kin_eps -- значение погрешности для решения ОКЗ"
     def get_effector(self):
         """Возвращает координаты центра тяжести рабочего органа"""
         return pb.getLinkState(self._id, self._eff_id)[0]
-    
+
+
 def getDOFIds(bId):
     """Получить сочленения со степенями свободы"""
     # пока что обрабатывает fixed, revolute и prismatic

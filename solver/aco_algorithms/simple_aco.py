@@ -1,5 +1,4 @@
 import numpy.random as random
-from copy import deepcopy
 
 
 class SimpleACO:
@@ -16,7 +15,7 @@ class SimpleACO:
             raise TypeError('No ant specified')
 
         if self.ants is None:
-            self.ants = [deepcopy(self.proto_ant)
+            self.ants = [self.proto_ant.clone()
                          for i in range(amount)]
 
     def generate_solutions(self):

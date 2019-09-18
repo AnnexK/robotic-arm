@@ -1,5 +1,6 @@
 from numpy import inf
 import numpy.random as random
+from copy import deepcopy
 
 
 def edge_attraction(edge, alpha, beta):
@@ -122,3 +123,12 @@ class Ant:
         pos = self.path.start.d
         self.path.clear()
         self.path.append(pos)
+
+    def clone(self):
+        ret = Ant(self.a,
+                  self.b,
+                  self.Q,
+                  self.G,
+                  self.pos)
+        ret.path = deepcopy(self.path)
+        return ret

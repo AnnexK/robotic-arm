@@ -33,3 +33,9 @@ class RobotizedAnt:
 
     def reset(self):
         self.ant.reset()
+
+    def clone(self):
+        decorated = self.ant.clone()
+        ret = RobotizedAnt(decorated, self.robot)
+        ret.origin = self.origin
+        return ret

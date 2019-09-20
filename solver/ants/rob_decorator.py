@@ -2,7 +2,7 @@ class RobotizedAnt:
     def __init__(self, a, R):
         self.ant = a
         self.robot = R
-        self.origin = R.get_effector()
+        self.start_state = R.state
 
     @property
     def pos(self):
@@ -26,7 +26,7 @@ class RobotizedAnt:
 
     def remove_cycles(self):
         self.ant.remove_cycles()
-        self.robot.move_to(self.origin)
+        self.robot.state = self.start_state
 
     def deposit_pheromone(self):
         self.ant.deposit_pheromone()
@@ -37,5 +37,5 @@ class RobotizedAnt:
     def clone(self):
         decorated = self.ant.clone()
         ret = RobotizedAnt(decorated, self.robot)
-        ret.origin = self.origin
+        ret.start_state = self.start_state
         return ret

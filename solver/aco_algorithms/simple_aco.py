@@ -1,4 +1,5 @@
 import numpy.random as random
+from math import inf
 
 
 class SimpleACO:
@@ -9,6 +10,8 @@ class SimpleACO:
         self.rate = decay
         self.ants = None
         self.proto_ant = None
+        self.best_solution = {'length': inf,
+                              'path': []}
 
     def make_ants(self, amount):
         if self.proto_ant is None:
@@ -24,11 +27,21 @@ class SimpleACO:
             print('Ant #', i + 1)
             while a.pos != self.end:
                 a.pick_edge()
+            pre_length = a.path_len
             a.remove_cycles()
             length = a.path_len
             lens.append(length)
-            print('Ant #', i + 1, 'finished, length:', length)
-        return min(lens), max(lens), sum(lens) / len(lens)
+            print('Ant # {} finished, length: {} ({})'
+                  .format(i+1, length, pre_length))
+            if length < self.best_solution['length']:
+                self.best_solution['length'] = length
+                self.best_solution['path'] = [i[0] for i in a.path]
+        return (min(lens),
+                max(lens),
+                sum(lens) / len(lens))
+
+    def result(self):
+        return self.best_solution['path']
 
     def set_proto(self, p):
         self.proto_ant = p

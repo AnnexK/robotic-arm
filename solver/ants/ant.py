@@ -22,6 +22,19 @@ class AntPath:
         self.sent.next = AntPath.PathNode(v, self.sent, self.sent)
         self.sent.prev = self.sent.next
 
+    class PathIter:
+        def __init__(self, path):
+            self.cur = path.start
+            self.end = path.end
+
+        def __next__(self):
+            if self.cur == self.end.next:
+                raise StopIteration
+
+            ret = self.cur.d
+            self.cur = self.cur.next
+            return ret
+
     @property
     def start(self):
         return self.sent.next
@@ -29,6 +42,9 @@ class AntPath:
     @property
     def end(self):
         return self.sent.prev
+
+    def __iter__(self):
+        return AntPath.PathIter(self)
 
     def append(self, v):
         new = AntPath.PathNode(v, self.end, self.sent)
@@ -119,16 +135,15 @@ class Ant:
 
     def reset(self):
         """Возвращает муравья к начальному состоянию"""
-
         pos = self.path.start.d
         self.path.clear()
         self.path.append(pos)
 
     def clone(self):
-        ret = Ant(self.a,
-                  self.b,
+        ret = Ant(self.alpha,
+                  self.beta,
                   self.Q,
-                  self.G,
+                  self.assoc_graph,
                   self.pos)
         ret.path = deepcopy(self.path)
         return ret

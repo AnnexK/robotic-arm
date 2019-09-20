@@ -1,1 +1,1 @@
-from writer.csv_writer import ColumnWriter
+from writer.csv_writer import ColumnWriter, DefaultWriter

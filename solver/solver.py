@@ -1,8 +1,3 @@
-from gridgraph.graph import GridGraph
-
-from functools import reduce
-from numpy import abs, ndarray, inf
-
 class AntSolver:
     """Класс, моделирующий решение задачи"""
     def __init__(self, strat):
@@ -12,7 +7,7 @@ class AntSolver:
         best_paths = []
         worst_paths = []
         avg_paths = []
-        
+
         for i in range(iters):
             self.S.make_ants(ants_n)
             print('Iter #', i + 1)
@@ -23,4 +18,4 @@ class AntSolver:
             self.S.update_pheromone()
             self.S.daemon_actions()
 
-        return best_paths, worst_paths, avg_paths
+        return best_paths, worst_paths, avg_paths, self.S.result()

@@ -1,13 +1,8 @@
-from numpy import full
-from functools import reduce
-
-#from gridgraph.iterator import VertIterator
-
 class GridGraph:
-    """Класс, моделирующий граф-решетку в трехмерном пространстве"""    
+    """Класс, моделирующий граф-решетку в трехмерном пространстве"""
     def __sum_fun(x, y):
         return x[0]+y[0], x[1]+y[1], x[2]+y[2]
-    
+
     def __init__(self, weight, base):
         """Инициализировать граф с количеством вершин Vx, Vy, Vz"""
 
@@ -18,9 +13,6 @@ class GridGraph:
         self._phi = [{},
                      {},
                      {}]
-
-#    def __iter__(self):
-#        return VertIterator(self)
 
     def get_adjacent(self, v):
         """Возвращает список смежных вершин для вершины v"""

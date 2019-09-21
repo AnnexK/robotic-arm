@@ -23,5 +23,5 @@ best, worst, average, path = sol.solve(iters=5, ants_n=64)
 with writer.ColumnWriter('simple.csv', ' ') as w:
     w.write(best, worst, average)
 
-with writer.DefaultWriter('result.txt', ' ') as w:
+with writer.PlainWriter('result.txt', ' ') as w:
     w.write(path)

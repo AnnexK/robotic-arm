@@ -1,5 +1,5 @@
 from gridgraph.graph import GridGraph
-from gridgraph.weight import BoundedConstWeight
+from gridgraph.weight_calcs.const import BoundedConstWeight
 
 
 class ExampleGraphBuilder:

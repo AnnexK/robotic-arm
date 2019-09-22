@@ -4,6 +4,8 @@ from solver.aco_algorithms.simple_aco import SimpleACO
 from solver.solver import AntSolver
 
 from solver.builders.graph_builder import ExampleGraphBuilder
+from plotter.plotter import Plot
+
 
 print('Building graph...')
 G, start, end = ExampleGraphBuilder(
@@ -18,10 +20,14 @@ S.set_proto(a)
 
 sol = AntSolver(S)
 print('Solving...')
-best, worst, average, path = sol.solve(iters=5, ants_n=64)
+best, worst, average, path = sol.solve(iters=50, ants_n=64)
 
-with writer.ColumnWriter('simple.csv', ' ') as w:
+with writer.ColumnWriter(input('input filename for stats: '),
+                         ' ') as w:
     w.write(best, worst, average)
 
-for v in path:
-    print(v)
+with writer.PlainWriter(input('input filename for solution: ')) as w:
+    w.write(path)
+
+p = Plot()
+p.plot(best, worst, average)

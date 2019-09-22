@@ -8,7 +8,12 @@ class PlainWriter:
         return self
 
     def write(self, *data):
-        self.fp.writelines(data[0])
+        if self.fp is None:
+            raise TypeError()
+        for d in zip(*data):
+            for val in d:
+                self.fp.write('{} '.format(val))
+            self.fp.write('\n')
 
     def __exit__(self, type, value, traceback):
         self.fp.close()

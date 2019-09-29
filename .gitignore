@@ -6,8 +6,11 @@
 # pycache #
 __pycache__
 
-# csv output files #
+# output files #
 *.csv
+*.txt
+*.png
+*.sol
 
 # tests #
 dijkstra-test.py

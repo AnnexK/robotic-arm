@@ -1,5 +1,6 @@
 import pybullet as pb
 
+
 class Environment:
     """Обертка над объектами pybullet, содержащая информацию
 об объектах внешней среды и предназначенная для хранения информации
@@ -9,7 +10,7 @@ class Environment:
 filename -- имя SDF-файла (абсолютный путь)
 при отсутствии параметра создается пустая внешняя среда"""
         if filename is None:
-            self._ids = list() # пустой
+            self._ids = list()  # пустой
         else:
             try:
                 self._ids = pb.loadSDF(filename)

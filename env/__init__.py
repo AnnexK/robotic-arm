@@ -8,6 +8,9 @@ from env.environment import Environment
 server_type = pybullet.DIRECT
 # присоединиться к серверу при подключении пакета
 server_id = pybullet.connect(server_type)
+if server_id == -1:
+    raise RuntimeError('not connected to pb server')
+
 if server_id > 0:
     print("default pb server already connected")
     pybullet.disconnect(server_id)

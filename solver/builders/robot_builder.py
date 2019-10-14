@@ -1,5 +1,5 @@
 from gridgraph.graph import GridGraph
-from gridgraph.weight import RobotWeight
+from gridgraph.weight_calcs import RobotWeight
 
 
 class RoboticGraphBuilder:

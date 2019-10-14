@@ -20,7 +20,7 @@ kin_eps -- значение погрешности для решения ОКЗ"
         try:
             self._id = pb.loadURDF(filename,
                                    basePosition=pos,
-                                   baseOrientation=orn,
+                                   baseOrientation=pb.getQuaternionFromEuler(orn),
                                    flags=pb.URDF_USE_SELF_COLLISION,
                                    useFixedBase=fixed)
         except pb.error as err:
@@ -85,23 +85,26 @@ kin_eps -- значение погрешности для решения ОКЗ"
         # сохранение первоначального положения
         start_joints = self.state
 
+        accuracy = self.kin_eps / 2
+        iters = round(1/accuracy)
+        
         # значение для orn по умолчанию неизвестно
         if orn is None:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos,
-                                               maxNumIterations=100,
-                                               residualThreshold=self._kin_eps)
+                                               maxNumIterations=iters,
+                                               residualThreshold=accuracy)
         else:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos, orn,
-                                               maxNumIterations=100,
-                                               residualThreshold=self._kin_eps)
+                                               maxNumIterations=iters,
+                                               residualThreshold=accuracy)
 
         # задание полученного положения
         self.state = IK
         # проверка полученного решения
         new_pos = self.get_effector()
-        if not (isclose(new_pos[0], pos[0], abs_tol=self.__kin_eps) and
-                isclose(new_pos[1], pos[1], abs_tol=self.__kin_eps) and
-                isclose(new_pos[2], pos[2], abs_tol=self.__kin_eps)):
+        if not (isclose(new_pos[0], pos[0], abs_tol=accuracy) and
+                isclose(new_pos[1], pos[1], abs_tol=accuracy) and
+                isclose(new_pos[2], pos[2], abs_tol=accuracy)):
             self.state = start_joints
             return False
         return True

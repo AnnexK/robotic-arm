@@ -8,14 +8,13 @@ class RobotWeight:
         self.R = R
 
     def get(self, v, w):
-        v_real = tuple(self.origin + self.R.kin_eps * v[i] for i in range(3))
+        def moved_normally(R, target):
+            return R.move_to(target) and not R.check_collisions()
+
         w_real = tuple(self.origin + self.R.kin_eps * w[i] for i in range(3))
-        r_real = self.R.get_effector()
 
-        if v_real != r_real:
-            raise ValueError('Start vertex does not correspond to robot state')
-
-        ret = 1.0 if self.R.move_to(w_real) else inf
-        self.R.move_to(r_real)
+        state = self.R.state
+        ret = 1.0 if moved_normally(self.R, w_real) else inf
+        self.R.state = state
 
         return ret

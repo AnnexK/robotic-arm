@@ -11,7 +11,7 @@ class RobotWeight:
         def moved_normally(R, target):
             return R.move_to(target) and not R.check_collisions()
 
-        w_real = tuple(self.origin + self.R.kin_eps * w[i] for i in range(3))
+        w_real = tuple(self.origin[i] + self.R.kin_eps * w[i] for i in range(3))
 
         state = self.R.state
         ret = 1.0 if moved_normally(self.R, w_real) else inf

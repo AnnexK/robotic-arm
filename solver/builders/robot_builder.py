@@ -12,8 +12,10 @@ class RoboticGraphBuilder:
         ret = GridGraph(
             RobotWeight(self.robot), self.phi)
 
+        eps = self.robot.kin_eps
+
         origin = self.robot.get_effector()
         diff = tuple(self.end[i] - origin[i] for i in range(3))
-        endpoint = tuple(round(diff[i]) for i in range(3))
+        endpoint = tuple(round(diff[i] / eps) for i in range(3))
 
         return ret, (0, 0, 0), endpoint

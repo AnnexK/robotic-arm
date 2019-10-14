@@ -32,7 +32,7 @@
             <iyz>0</iyz>
             <izz>1</izz>
           </inertia>
-          <mass>10000000000000000.0</mass>
+          <mass>0.0</mass>
         </inertial>
       </link>
       <joint name="box_base" type="fixed">
@@ -73,7 +73,7 @@
             <iyz>0</iyz>
             <izz>1</izz>
           </inertia>
-          <mass>10000000000000000.0</mass>
+          <mass>0.0</mass>
         </inertial>
       </link>
       <joint name="ball_base" type="fixed">
@@ -115,7 +115,7 @@
             <iyz>0</iyz>
             <izz>1</izz>
           </inertia>
-          <mass>10000000000000000.0</mass>
+          <mass>0.0</mass>
         </inertial>
       </link>
       <joint name="floor_base" type="fixed">

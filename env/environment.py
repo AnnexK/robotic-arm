@@ -16,6 +16,8 @@ filename -- имя SDF-файла (абсолютный путь)
                 self._ids = pb.loadSDF(filename)
             except pb.error:
                 raise ValueError('failed to read SDF file')
+        for body_id in self._ids:
+            pb.resetBaseVelocity(body_id, (0, 0, 0), (0, 0, 0))
 
     def __getitem__(self, i):
         """Возвращает идентификатор PB i-го объекта"""

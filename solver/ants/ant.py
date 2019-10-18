@@ -3,13 +3,6 @@ import numpy.random as random
 from copy import deepcopy
 
 
-def edge_attraction(edge, alpha, beta):
-    """Вычисляет привлекательность ребра по формуле"""
-    if edge[0] == inf:
-        return 0.0
-    return edge[1] ** alpha * (1 / edge[0]) ** beta
-
-
 class AntPath:
     class PathNode:
         def __init__(self, data=None, prev=None, next=None):
@@ -86,30 +79,35 @@ class Ant:
             n = n.next
         return ret
 
+    def edge_attraction(self, v, w):
+        w = self.assoc_graph.get_weight(v, w)
+        phi = self.assoc_graph.get_phi(v, w)
+
+        if w == inf:
+            return 0.0
+        else:
+            return w ** self.alpha * phi ** self.beta
+
     def pick_edge(self):
         """Совершает перемещение в одну из соседних точек в графе G"""
 
         G = self.assoc_graph
 
         targets = list(G.get_adjacent(self.pos))
-        # следует переделать в объект
-        edges = [(G.get_weight(self.pos, t), G.get_phi(self.pos, t))
-                 for t in targets]
 
         # привлекательности ребер
-        attr = [edge_attraction(e,
-                                self.alpha,
-                                self.beta)
-                for e in edges]
+        attrs = [self.edge_attraction(self.pos, t)
+                 for t in targets]
 
-        total_attr = sum(attr)
-        attr = [a / total_attr for a in attr]
+        total_attr = sum(attrs)
+        # TODO: откат в предыдущую позицию, если total_attr == 0
+        attr = [a / total_attr for a in attrs]
 
         # случайный выбор тут
-        choice = random.choice(len(edges), p=attr)
+        choice = random.choice(len(targets), p=attr)
 
         # добавить в путь (вершина, вес)
-        self.pos = targets[choice], edges[choice][0]
+        self.pos = targets[choice], G.get_weight(self.pos, targets[choice])
 
     def remove_cycles(self):
         """Извлекает циклы из пути"""

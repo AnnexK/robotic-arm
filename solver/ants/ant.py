@@ -80,13 +80,13 @@ class Ant:
         return ret
 
     def edge_attraction(self, v, w):
-        w = self.assoc_graph.get_weight(v, w)
+        weight = self.assoc_graph.get_weight(v, w)
         phi = self.assoc_graph.get_phi(v, w)
 
         if w == inf:
             return 0.0
         else:
-            return w ** self.alpha * phi ** self.beta
+            return phi ** self.alpha * (1/weight) ** self.beta
 
     def pick_edge(self):
         """Совершает перемещение в одну из соседних точек в графе G"""
@@ -94,7 +94,6 @@ class Ant:
         G = self.assoc_graph
 
         targets = list(G.get_adjacent(self.pos))
-
         # привлекательности ребер
         attrs = [self.edge_attraction(self.pos, t)
                  for t in targets]

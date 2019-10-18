@@ -2,6 +2,7 @@ class RobotizedAnt:
     def __init__(self, a, R):
         self.ant = a
         self.robot = R
+        self.origin = R.get_effector()
         self.start_state = R.state
 
     @property

@@ -5,7 +5,7 @@ import pathlib
 from env.robot import Robot
 from env.environment import Environment
 
-server_type = pybullet.DIRECT
+server_type = pybullet.GUI
 # присоединиться к серверу при подключении пакета
 server_id = pybullet.connect(server_type)
 if server_id == -1:

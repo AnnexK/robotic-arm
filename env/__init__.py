@@ -7,7 +7,7 @@ from env.environment import Environment
 
 server_type = pybullet.GUI
 # присоединиться к серверу при подключении пакета
-server_id = pybullet.connect(server_type)
+server_id = pybullet.connect(server_type, options='--opengl2')
 if server_id == -1:
     raise RuntimeError('not connected to pb server')
 

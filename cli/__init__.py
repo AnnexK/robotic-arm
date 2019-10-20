@@ -2,6 +2,8 @@ from cli.arg_parser import make_parser, check_args
 
 import env
 
+from logger import log
+
 from solver.builders.robot_builder import RoboticGraphBuilder
 from solver.ants.ant import Ant
 from solver.ants.rob_decorator import RobotizedAnt
@@ -19,9 +21,10 @@ def main():
     if not check_args(args):
         raise ValueError('one of the args has wrong value')
 
-    print('Loading task...')
+    log()['MAIN'].log('Loading task...')
     Robot, Env, End, emp_best = env.load_task(pathlib.Path(args.task))
-    print('Building graph...')
+    log()['MAIN'].log('Task loaded!')
+    log()['MAIN'].log('Creating solver...')
     G, start, end = RoboticGraphBuilder(
         Robot, End, args.phi).make_graph()
 
@@ -36,8 +39,9 @@ def main():
     strat.set_proto(rob_ant)
 
     S = AntSolver(strat)
-    print('Solving...')
+    log()['MAIN'].log('Solver created! Solving...')
     best, worst, avg = S.solve(args.iters, args.ant_num)
 
+    log()['MAIN'].log('Solved!')
     with writer.ColumnWriter(input('Input save file name: '), ' ') as w:
         w.write(best, worst, avg)

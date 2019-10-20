@@ -1,5 +1,6 @@
 import numpy.random as random
 from math import inf
+from logger import log
 
 
 class SimpleACO:
@@ -20,19 +21,23 @@ class SimpleACO:
         if self.ants is None:
             self.ants = [self.proto_ant.clone()
                          for i in range(amount)]
+        else:
+            for a in self.ants:
+                a.reset()
 
     def generate_solutions(self):
         lens = []
         for i, a in enumerate(self.ants):
-            print('Ant #', i + 1)
+            log()['ANT'].log('Ant #{}'.format(i+1))
             while a.pos != self.end:
                 a.pick_edge()
             pre_length = a.path_len
             a.remove_cycles()
             length = a.path_len
             lens.append(length)
-            print('Ant # {} finished, length: {} ({})'
-                  .format(i+1, length, pre_length))
+            log()['ANT'].log('Ant #{} finished'.format(i+1))
+            log()['ANT'].log('Path length: {}'.format(length))
+            log()['ANT'].log('(pre-remove_cycles: {})'.format(pre_length))
             if length < self.best_solution['length']:
                 self.best_solution['length'] = length
                 self.best_solution['path'] = [i[0] for i in a.path]
@@ -52,7 +57,6 @@ class SimpleACO:
         # отложение
         for a in self.ants:
             a.deposit_pheromone()
-            a.reset()
 
     def daemon_actions(self):
         pass

@@ -1,3 +1,6 @@
+from logger import log
+
+
 class AntSolver:
     """Класс, моделирующий решение задачи"""
     def __init__(self, strat):
@@ -10,7 +13,7 @@ class AntSolver:
 
         for i in range(iters):
             self.S.make_ants(ants_n)
-            print('Iter #', i + 1)
+            log()['SOLVER'].log('Iter {}'.format(i+1))
             best, worst, avg = self.S.generate_solutions()
             best_paths.append(best)
             worst_paths.append(worst)

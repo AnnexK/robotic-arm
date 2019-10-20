@@ -6,6 +6,9 @@
 # pycache #
 __pycache__
 
+# python compiled files #
+.pyc
+
 # output files #
 *.csv
 *.txt

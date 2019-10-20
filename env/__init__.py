@@ -4,6 +4,7 @@ import pathlib
 
 from env.robot import Robot
 from env.environment import Environment
+from logger import log
 
 server_type = pybullet.GUI
 # присоединиться к серверу при подключении пакета
@@ -12,7 +13,7 @@ if server_id == -1:
     raise RuntimeError('not connected to pb server')
 
 if server_id > 0:
-    print("default pb server already connected")
+    log()['PYBULLET'].log('already connected to server with id=0')
     pybullet.disconnect(server_id)
 
 
@@ -55,10 +56,14 @@ def load_task(filename):
               task_data['fixed_base'],
               task_data['eps'])
 
+    log()['PYBULLET'].log('urdf loaded successfully')
+
     # задание начального состояния звеньев
     if task_data['dofs'] is not None:
         R.state = task_data['dofs']
 
     E = Environment(None if sdf_filename is None else str(sdf_filename))
+
+    log()['PYBULLET'].log('environment loaded successfully')
 
     return R, E, task_data['endpoint'], task_data['emp_best']

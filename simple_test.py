@@ -6,8 +6,9 @@ from solver.solver import AntSolver
 from solver.builders.graph_builder import ExampleGraphBuilder
 from plotter.plotter import Plot
 
+from logger import log
 
-print('Building graph...')
+log()['MAIN'].log('Creating solver...')
 G, start, end = ExampleGraphBuilder(
     # размеры графа
     30, 30, 30,
@@ -41,7 +42,7 @@ S.set_proto(a)
 # с помощью объекта-алгоритма
 # параметр: объект реализации алгоритма
 sol = AntSolver(S)
-print('Solving...')
+log()['MAIN'].log('Solving...')
 
 # возвращает длины лучших, худших,
 # средние длины путей для каждой итерации,
@@ -49,6 +50,7 @@ print('Solving...')
 # iters - кол-во итераций, ants_n - кол-во муравьев
 best, worst, average, path = sol.solve(iters=50, ants_n=64)
 
+log()['MAIN'].log('Solving complete.')
 # запрашивает имя файла для записи лучших, худших
 # и средних длин пути
 with writer.ColumnWriter(input('input filename for stats: '),
@@ -59,6 +61,7 @@ with writer.ColumnWriter(input('input filename for stats: '),
 with writer.PlainWriter(input('input filename for solution: ')) as w:
     w.write(path)
 
+log()['MAIN'].log('Plotting...')
 # строит графики
 # (нужна библиотека matplotlib)
 # (установка: pip install matplotlib)

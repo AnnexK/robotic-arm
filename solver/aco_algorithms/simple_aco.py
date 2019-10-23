@@ -41,7 +41,7 @@ class SimpleACO:
             if length < self.best_solution['length']:
                 self.best_solution['length'] = length
                 self.best_solution['path'] = [i[0] for i in a.path]
-        return (min(lens),
+        return (self.best_solution['length'],
                 max(lens),
                 sum(lens) / len(lens))
 

@@ -7,21 +7,18 @@ class ConstWeight:
 
     def get(self, v, w):
         return self.w
-    
+
 
 class BoundedConstWeight:
-    def __init__(self, vx, vy, vz, c):
-        self.x = vx
-        self.y = vy
-        self.z = vz
+    def __init__(self, dims, c):
+        self.dims = dims
         self.w = c
 
     def _in_bounds(self, v):
-        return 0 <= v[0] < self.x and 0 <= v[1] < self.y and 0 <= v[2] < self.z
-    
+        return all(map(lambda v, b: 0 <= v < b, v, self.dims))
+
     def get(self, v, w):
         if self._in_bounds(v) and self._in_bounds(w):
             return self.w
         else:
             return inf
-

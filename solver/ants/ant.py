@@ -2,6 +2,8 @@ from numpy import inf
 import numpy.random as random
 from copy import deepcopy
 
+from logger import log
+
 
 class AntPath:
     class PathNode:
@@ -83,6 +85,7 @@ class Ant:
         weight = self.assoc_graph.get_weight(v, w)
         phi = self.assoc_graph.get_phi(v, w)
 
+        log()['ATTR_DEBUG'].log('{}, {}'.format(weight, phi))
         if w == inf:
             return 0.0
         else:
@@ -97,6 +100,8 @@ class Ant:
         # привлекательности ребер
         attrs = [self.edge_attraction(self.pos, t)
                  for t in targets]
+        for a in attrs:
+            log()['ATTR_DEBUG'].log(str(a))
 
         total_attr = sum(attrs)
         # TODO: откат в предыдущую позицию, если total_attr == 0

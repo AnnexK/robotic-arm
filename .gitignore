@@ -20,3 +20,7 @@ results
 dijkstra-test.py
 precalc_profile.py
 build_test.py
+
+# simple_test test inputs #
+*.tst
+!test.tst

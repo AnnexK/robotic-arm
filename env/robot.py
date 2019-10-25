@@ -8,7 +8,11 @@ class Robot:
 об объекте робота и позволяющая производить операции перемещения
 рабочего органа, получения информации о положении рабочего
 органа и проверки на столкновения"""
-    def __init__(self, filename, eff_name, pos, orn, fixed, kin_eps):
+    def __init__(self, filename, eff_name,
+                 pos=(0, 0, 0),
+                 orn=(0, 0, 0),
+                 fixed=True,
+                 kin_eps=1e-2):
         """Параметры:
 filename -- имя URDF-файла (абсолютный путь)
 eff_name -- имя звена-рабочего органа

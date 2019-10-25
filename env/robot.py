@@ -45,6 +45,7 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
         # получаем список индексов звеньев со степенями свободы
         self._dofs = getDOFIds(self._id)
+        self._lower, self._upper = get_limits(self.id)
 
     def __del__(self):
         """Предназначено для освобождения ресурсов pybullet"""
@@ -91,7 +92,7 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
         accuracy = self.kin_eps / 2
         iters = round(1/accuracy)
-        
+
         # значение для orn по умолчанию неизвестно
         if orn is None:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos,
@@ -161,3 +162,14 @@ def getDOFIds(bId):
             ret.append(i)
 
     return ret
+
+
+def get_limits(bId):
+    lower, upper = [], []
+    for i in range(pb.getNumJoints(bId)):
+        joint = pb.getJointInfo(bId, i)
+        if joint[2] != pb.JOINT_FIXED:
+            lower.append(joint[8])  # нижний предел
+            upper.append(joint[9])  # верхний предел
+
+    return lower, upper

@@ -1,7 +1,7 @@
 import writer
 
 from solver.ants.ant import Ant
-from solver.aco_algorithms.simple_aco import SimpleACO
+from solver.aco_algorithms.ant_system import AntSystem
 from solver.solver import AntSolver
 
 from solver.builders.graph_builder import ExampleGraphBuilder
@@ -144,7 +144,7 @@ a = Ant(vals['a']['value'],
 # граф;
 # конечная точка;
 # скорость испарения (от 0 до 1)
-S = SimpleACO(G,
+S = AntSystem(G,
               vals['end']['value'],
               vals['rho']['value'])
 

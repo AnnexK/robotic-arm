@@ -3,7 +3,7 @@ from math import inf
 from logger import log
 
 
-class SimpleACO:
+class AntSystem:
     def __init__(self, G, end, decay):
         random.seed()
         self.graph = G

@@ -7,7 +7,7 @@ from logger import log
 from solver.builders.robot_builder import RoboticGraphBuilder
 from solver.ants.ant import Ant
 from solver.ants.rob_decorator import RobotizedAnt
-from solver.aco_algorithms.simple_aco import SimpleACO
+from solver.aco_algorithms.simple_aco import AntSystem
 from solver.solver import AntSolver
 
 import pathlib
@@ -35,7 +35,7 @@ def main():
             start)
     rob_ant = RobotizedAnt(a, Robot)
 
-    strat = SimpleACO(G, end, args.decay)
+    strat = AntSystem(G, end, args.decay)
     strat.set_proto(rob_ant)
 
     S = AntSolver(strat)

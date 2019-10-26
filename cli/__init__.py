@@ -7,7 +7,7 @@ from logger import log
 from solver.builders.robot_builder import RoboticGraphBuilder
 from solver.ants.ant import Ant
 from solver.ants.rob_decorator import RobotizedAnt
-from solver.aco_algorithms.simple_aco import AntSystem
+from solver.aco_algorithms.ant_system import AntSystem
 from solver.solver import AntSolver
 
 import pathlib

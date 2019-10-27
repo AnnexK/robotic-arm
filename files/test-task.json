@@ -1,5 +1,6 @@
 {
     "urdf_name" : "test-model.urdf",
+    "sdf_name" : "test-env.sdf",
     "effector_name" : "effector",
     "eps" : 1e-2,
     "dofs" : [1.57, 1.00, 0.92, 0.357],

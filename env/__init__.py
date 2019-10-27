@@ -6,7 +6,7 @@ from env.robot import Robot
 from env.environment import Environment
 from logger import log
 
-server_type = pybullet.DIRECT
+server_type = pybullet.GUI
 # присоединиться к серверу при подключении пакета
 server_id = pybullet.connect(server_type, options='--opengl2')
 if server_id == -1:

@@ -1,5 +1,6 @@
 from gridgraph.graph import GridGraph
 from gridgraph.weight_calcs.robotic import RobotWeight
+from gridgraph.phi_managers.base import PhiManager
 
 
 class RoboticGraphBuilder:
@@ -10,7 +11,9 @@ class RoboticGraphBuilder:
 
     def make_graph(self):
         ret = GridGraph(
-            RobotWeight(self.robot), self.phi)
+            RobotWeight(self.robot),
+            PhiManager(self.phi)
+        )
 
         eps = self.robot.kin_eps
 

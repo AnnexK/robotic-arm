@@ -4,9 +4,10 @@ from logger import log
 
 
 class AntSystem:
-    def __init__(self, G, end, decay):
+    def __init__(self, G, Q, end, decay):
         random.seed()
         self.graph = G
+        self.ant_power = Q
         self.end = end
         self.rate = decay
         self.ants = None
@@ -56,7 +57,7 @@ class AntSystem:
         self.graph.evaporate(self.rate)
         # отложение
         for a in self.ants:
-            a.deposit_pheromone()
+            a.deposit_pheromone(self.ant_power)
 
     def daemon_actions(self):
         pass

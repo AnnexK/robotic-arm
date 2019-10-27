@@ -30,12 +30,11 @@ def main():
 
     a = Ant(args.alpha,
             args.beta,
-            args.ant_power,
             G,
             start)
     rob_ant = RobotizedAnt(a, Robot)
 
-    strat = AntSystem(G, end, args.decay)
+    strat = AntSystem(G, args.ant_power, end, args.decay)
     strat.set_proto(rob_ant)
 
     S = AntSolver(strat)

@@ -57,10 +57,9 @@ class AntPath:
 
 class Ant:
     """Класс, моделирующий поведение муравья"""
-    def __init__(self, a, b, Q, G, pos):
+    def __init__(self, a, b, G, pos):
         self.alpha = a
         self.beta = b
-        self.Q = Q
         self.assoc_graph = G
         self.path = AntPath((pos, 0.0))
 
@@ -125,10 +124,10 @@ class Ant:
                 cur_right = cur_right.prev
             cur_left = cur_left.next
 
-    def deposit_pheromone(self):
+    def deposit_pheromone(self, Q):
         """Распространяет феромон по всем пройденным ребрам"""
         G = self.assoc_graph
-        phi = self.Q / self.path_len
+        phi = Q / self.path_len
 
         n = self.path.start
         while n != self.path.end:
@@ -144,7 +143,6 @@ class Ant:
     def clone(self):
         ret = Ant(self.alpha,
                   self.beta,
-                  self.Q,
                   self.assoc_graph,
                   self.pos)
         ret.path = deepcopy(self.path)

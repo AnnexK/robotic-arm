@@ -135,7 +135,6 @@ G, start, end = ExampleGraphBuilder(
 # начальная точка
 a = Ant(vals['a']['value'],
         vals['b']['value'],
-        vals['q']['value'],
         G,
         vals['start']['value'])
 
@@ -145,6 +144,7 @@ a = Ant(vals['a']['value'],
 # конечная точка;
 # скорость испарения (от 0 до 1)
 S = AntSystem(G,
+              vals['q']['value'],
               vals['end']['value'],
               vals['rho']['value'])
 

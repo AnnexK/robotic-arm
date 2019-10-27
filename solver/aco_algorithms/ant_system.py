@@ -29,9 +29,14 @@ class AntSystem:
     def generate_solutions(self):
         lens = []
         for i, a in enumerate(self.ants):
+            steps = 0
             log()['ANT'].log('Ant #{}'.format(i+1))
             while a.pos != self.end:
                 a.pick_edge()
+                steps += 1
+                if steps % 1000 == 0:
+                    log()['ANT'].log('{} steps'
+                                     .format(steps))
             pre_length = a.path_len
             a.remove_cycles()
             length = a.path_len

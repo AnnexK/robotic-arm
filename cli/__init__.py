@@ -4,7 +4,7 @@ import env
 
 from logger import log
 
-from solver.builders.robot_builder import RoboticGraphBuilder
+from solver.graph_builders.robot_builder import RoboticGraphBuilder
 from solver.ants.ant import Ant
 from solver.ants.rob_decorator import RobotizedAnt
 from solver.aco_algorithms.ant_system import AntSystem
@@ -28,6 +28,8 @@ def main():
     G, start, end = RoboticGraphBuilder(
         Robot, End, args.phi).make_graph()
 
+    log()['GRAPH_GRASP'].log('s = {}; e = {}'
+                             .format(start, end))
     a = Ant(args.alpha,
             args.beta,
             G,

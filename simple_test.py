@@ -4,7 +4,7 @@ from solver.ants.ant import Ant
 from solver.aco_algorithms.ant_system import AntSystem
 from solver.solver import AntSolver
 
-from solver.builders.graph_builder import ExampleGraphBuilder
+from solver.graph_builders.graph_builder import ExampleGraphBuilder
 from plotter.plotter import Plot
 
 from logger import log

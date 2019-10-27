@@ -5,5 +5,6 @@ log().add_logger('MAIN', stdout)
 log().add_logger('SOLVER', stdout)
 log().add_logger('ANT', stdout)
 log().add_logger('PYBULLET', stdout)
+log().add_logger('GRAPH_GRASP', stdout)
 
 log().log('loggers loaded normally')

@@ -42,7 +42,7 @@ def main():
 
     S = AntSolver(strat)
     log()['MAIN'].log('Solver created! Solving...')
-    best, worst, avg = S.solve(args.iters, args.ant_num)
+    best, worst, avg, path = S.solve(args.iters, args.ant_num)
 
     log()['MAIN'].log('Solved!')
     with writer.ColumnWriter(input('Input save file name: '), ' ') as w:

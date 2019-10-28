@@ -61,23 +61,23 @@ class Ant:
         self.alpha = a
         self.beta = b
         self.assoc_graph = G
-        self.path = AntPath((pos, 0.0))
+        self._path = AntPath((pos, 0.0))
 
     @property
     def pos(self):
-        return self.path.end.d[0]
+        return self._path.end.d[0]
 
     @pos.setter
     def pos(self, value):
-        self.path.append(value)
+        self._path.append(value)
+
+    @property
+    def path(self):
+        return self._path
 
     @property
     def path_len(self):
-        ret = 0.0
-        n = self.path.start
-        while n != self.path.sent:
-            ret += n.d[1]
-            n = n.next
+        ret = sum(v[1] for v in self.path)
         return ret
 
     def edge_attraction(self, v, w):
@@ -114,12 +114,12 @@ class Ant:
 
     def remove_cycles(self):
         """Извлекает циклы из пути"""
-        cur_left = self.path.start
-        while cur_left != self.path.end:
-            cur_right = self.path.end
+        cur_left = self._path.start
+        while cur_left != self._path.end:
+            cur_right = self._path.end
             while cur_right != cur_left:
                 if cur_left.d[0] == cur_right.d[0]:
-                    self.path.extract(cur_left.next, cur_right)
+                    self._path.extract(cur_left.next, cur_right)
                     break
                 cur_right = cur_right.prev
             cur_left = cur_left.next
@@ -129,21 +129,21 @@ class Ant:
         G = self.assoc_graph
         phi = Q / self.path_len
 
-        n = self.path.start
-        while n != self.path.end:
+        n = self._path.start
+        while n != self._path.end:
             G.add_phi(n.d[0], n.next.d[0], phi)
             n = n.next
 
     def reset(self):
         """Возвращает муравья к начальному состоянию"""
         pos = self.path.start.d
-        self.path.clear()
-        self.path.append(pos)
+        self._path.clear()
+        self._path.append(pos)
 
     def clone(self):
         ret = Ant(self.alpha,
                   self.beta,
                   self.assoc_graph,
                   self.pos)
-        ret.path = deepcopy(self.path)
+        ret._path = deepcopy(self._path)
         return ret

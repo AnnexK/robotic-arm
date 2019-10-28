@@ -1,4 +1,5 @@
 import pybullet as pb
+from logger import log
 
 
 class Environment:
@@ -16,8 +17,8 @@ filename -- имя SDF-файла (абсолютный путь)
                 self._ids = pb.loadSDF(filename)
             except pb.error:
                 raise ValueError('failed to read SDF file')
-        for body_id in self._ids:
-            pb.resetBaseVelocity(body_id, (0, 0, 0), (0, 0, 0))
+
+        self.endpoint = -1
 
     def __getitem__(self, i):
         """Возвращает идентификатор PB i-го объекта"""
@@ -27,3 +28,12 @@ filename -- имя SDF-файла (абсолютный путь)
         """Предназначено для освобождения ресурсов"""
         for i in self._ids:
             pb.removeBody(i)
+        if self.endpoint >= 0:
+            pb.removeBody(self.endpoint)
+
+    def set_endpoint(self, p):
+        visual = pb.createVisualShape(shapeType=pb.GEOM_SPHERE,
+                                      radius=0.05,
+                                      rgbaColor=[1., 0., 0., 1.])
+        self.endpoint = pb.createMultiBody(baseVisualShapeIndex=visual,
+                                           basePosition=p)

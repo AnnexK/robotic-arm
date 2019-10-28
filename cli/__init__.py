@@ -23,6 +23,7 @@ def main():
 
     log()['MAIN'].log('Loading task...')
     Robot, Env, End, emp_best = env.load_task(pathlib.Path(args.task))
+    Env.set_endpoint(End)
     log()['MAIN'].log('Task loaded!')
     log()['MAIN'].log('Creating solver...')
     G, start, end = RoboticGraphBuilder(

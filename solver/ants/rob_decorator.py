@@ -14,6 +14,10 @@ class RobotizedAnt:
         self.ant.pos = value
 
     @property
+    def path(self):
+        return self.ant.path
+
+    @property
     def path_len(self):
         return self.ant.path_len
 
@@ -29,8 +33,8 @@ class RobotizedAnt:
         self.ant.remove_cycles()
         self.robot.state = self.start_state
 
-    def deposit_pheromone(self):
-        self.ant.deposit_pheromone()
+    def deposit_pheromone(self, Q):
+        self.ant.deposit_pheromone(Q)
 
     def reset(self):
         self.ant.reset()

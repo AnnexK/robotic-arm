@@ -1,13 +1,74 @@
 import writer
 
 from solver.ants.ant import Ant
-from solver.aco_algorithms.ant_system import AntSystem
+from solver.aco_algorithms import AntSystem, ElitistAS, ASRank
 from solver.solver import AntSolver
 
-from solver.graph_builders.graph_builder import ExampleGraphBuilder
+from gridgraph import GridGraph
+from gridgraph.weight_calcs.const import BoundedConstWeight
+from gridgraph.phi_managers.base import PhiManager
+# для MMAS, не используется
+from gridgraph.phi_managers.bounded import BoundedPhiManager
+
 from plotter.plotter import Plot
 
 from logger import log
+
+
+def as_builder(params):
+    g = GridGraph(BoundedConstWeight(params['dims'],
+                                     1.0),
+                  PhiManager(params['phi']))
+
+    a = Ant(params['a'],
+            params['b'],
+            g,
+            params['start'])
+
+    S = AntSystem(g, params['Q'],
+                  params['end'],
+                  params['rho'])
+
+    S.set_proto(a)
+    return S
+
+
+def eas_builder(params):
+    g = GridGraph(BoundedConstWeight(params['dims'],
+                                     1.0),
+                  PhiManager(params['phi']))
+
+    a = Ant(params['a'],
+            params['b'],
+            g,
+            params['start'])
+
+    S = ElitistAS(g, params['Q'],
+                  params['end'],
+                  params['rho'],
+                  params['Qe'])
+
+    S.set_proto(a)
+    return S
+
+
+def asrank_builder(params):
+    g = GridGraph(BoundedConstWeight(params['dims'],
+                                     1.0),
+                  PhiManager(params['phi']))
+
+    a = Ant(params['a'],
+            params['b'],
+            g,
+            params['start'])
+
+    S = ASRank(g, params['Q'],
+               params['end'],
+               params['rho'],
+               params['w'])
+
+    S.set_proto(a)
+    return S
 
 
 # функции, проверяющие значения вводимых данных
@@ -58,6 +119,16 @@ def rho_bound(r):
         return None
 
 
+# имена алгоритмов
+alg_builders = {'antsystem': as_builder,
+                'elitist': eas_builder,
+                'asrank': asrank_builder, }
+
+
+def alg_name(s):
+    return s if any(s == n for n in alg_builders) else None
+
+
 # параметры, их значения по умолчанию и валидаторы
 vals = {'a': {'value': 1.0, 'validator': gz_float},
         'b': {'value': 1.0, 'validator': gz_float},
@@ -74,9 +145,12 @@ vals = {'a': {'value': 1.0, 'validator': gz_float},
         },
         'phi': {'value': 1e-5, 'validator': gz_float},
         'rho': {'value': 2e-1, 'validator': rho_bound},
-        'q': {'value': 1.0, 'validator': gz_float},
+        'Q': {'value': 1.0, 'validator': gz_float},
         'n': {'value': 50, 'validator': gz_int},
-        'i': {'value': 64, 'validator': gz_int}}
+        'i': {'value': 64, 'validator': gz_int},
+        'alg': {'value': 'antsystem', 'validator': alg_name},
+        'Qe': {'value': 1.0, 'validator': gz_float},
+        'w': {'value': 50, 'validator': gz_int}, }
 
 # формат входного файла:
 # каждая строка:
@@ -92,6 +166,13 @@ vals = {'a': {'value': 1.0, 'validator': gz_float},
 # dims - размерности графа (x, y, z)
 # start - начальная точка
 # end - конечная точка
+# alg - имя алгоритма
+
+# Qe - количество феромона, откладываемого на лучшем пути
+# (для EAS)
+
+# w - количество ранжируемых муравьев
+# (для ASrank)
 
 # если одного из параметров в файле не будет найдено,
 # то будет использоваться значение по умолчанию
@@ -102,12 +183,17 @@ vals = {'a': {'value': 1.0, 'validator': gz_float},
 # программа запрашивает имя файла
 with open(input('Введите имя файла с параметрами: '), 'r') as fp:
     for s in fp.readlines():
+        s = s.strip()
         arg, val = s.split('=')
         validated = vals[arg]['validator'](val)
         if validated is not None:
             vals[arg]['value'] = validated
         else:
-            raise ValueError('Wrong value read')
+            raise ValueError('Wrong value read: {}'
+                             .format(arg))
+
+params = {k: vals[k]['value'] for k in vals if k != 'alg'}
+alg = vals['alg']['value']
 
 # вывод введенных параметров
 # (не используется)
@@ -116,45 +202,7 @@ for k in vals:
 
 
 log()['MAIN'].log('Creating solver...')
-G, start, end = ExampleGraphBuilder(
-    # размеры графа
-    vals['dims']['value'],
-    # начальная точка
-    vals['start']['value'],
-    # конечная точка
-    vals['end']['value'],
-    # базовый уровень феромона
-    vals['phi']['value']).make_graph()
-
-# a - муравей
-# параметры:
-# коэф. привлекательности по кол-ву феромона на ребре;
-# коэф. привлекательности по весу ребра;
-# "сила" муравья (суммарное кол-во откладываемого феромона);
-# граф, на котором происходит поиск решения;
-# начальная точка
-a = Ant(vals['a']['value'],
-        vals['b']['value'],
-        G,
-        vals['start']['value'])
-
-# S - объект конкретной реализации алгоритма м.к. (стратегия)
-# параметры:
-# граф;
-# конечная точка;
-# скорость испарения (от 0 до 1)
-S = AntSystem(G,
-              vals['q']['value'],
-              vals['end']['value'],
-              vals['rho']['value'])
-
-# задание муравья для создания новых
-S.set_proto(a)
-
-# sol - объект, осуществляющий решение задачи
-# с помощью объекта-алгоритма
-# параметр: объект реализации алгоритма
-sol = AntSolver(S)
+sol = AntSolver(alg_builders[alg](params))
 log()['MAIN'].log('Solving...')
 
 # возвращает длину

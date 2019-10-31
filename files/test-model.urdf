@@ -6,17 +6,21 @@
   </material>
 
   <material name="blue">
-    <color rgba="0 0 1 1"/>
+    <color rgba="0 0 0.7 1"/>
   </material>
 
   <material name="green">
-    <color rgba="0 1 0 1"/>
+    <color rgba="0 0.75 0 1"/>
   </material>
 
   <material name="red">
     <color rgba="1 0 0 1"/>
   </material>
 
+  <material name="yellow">
+    <color rgba="0.8 0.8 0 1"/>
+  </material>
+  
   <link name="base_link"/>
 
   <link name="link0">
@@ -83,20 +87,36 @@
     </collision>  
   </link>
 
-  <link name="effector">
+  <link name="link4">
     <visual>
       <geometry>
-        <sphere radius="0.1"/>
+	<box size="0.1 0.1 0.3"/>
       </geometry>
-      <material name="black"/>
-      <origin rpy="0 0 0" xyz="0 0 .1"/>
+      <material name="yellow"/>
+      <origin rpy="0 0 0" xyz="0 0 .15"/>
     </visual>
     <collision>
       <geometry>
-        <sphere radius="0.1"/>
+	<box size="0.1 0.1 0.3"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0.15"/>
+    </collision>
+  </link>
+  
+  <link name="effector">
+    <visual>
+      <geometry>
+        <sphere radius="0.071"/>
       </geometry>
       <material name="black"/>
-      <origin rpy="0 0 0" xyz="0 0 .1"/>
+      <origin rpy="0 0 0" xyz="0 0 0.05"/>
+    </visual>
+    <collision>
+      <geometry>
+        <sphere radius="0.071"/>
+      </geometry>
+      <material name="black"/>
+      <origin rpy="0 0 0" xyz="0 0 0.05"/>
     </collision>
   </link>
 
@@ -129,8 +149,15 @@
     <limit lower="-1.57" upper="1.57" effort="0" velocity="0"/> 
   </joint>
 
-  <joint name="eff_joint" type="fixed">
+  <joint name="joint4" type="revolute">
     <parent link="link3"/>
+    <child link="link4"/>
+    <origin xyz="0 0 0.25"/>
+    <limit lower="-1.57" upper="1.57" effort="0" velocity="0"/> 
+  </joint>
+
+  <joint name="eff_joint" type="fixed">
+    <parent link="link4"/>
     <child link="effector"/>
     <origin xyz="0 0 .25"/>
   </joint>

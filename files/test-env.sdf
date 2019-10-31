@@ -32,5 +32,31 @@
         <child>floor_link</child>
       </joint>
     </model>
+    <model name="box">
+      <static>1</static>
+      <link name="box_world_link"/>
+      <link name="box_link">
+	<pose>0.75 0.0 0.4 0 0 0</pose>
+	<gravity>0</gravity>
+	<visual name="box_visual">
+	  <geometry>
+	    <box>
+	      <size>0.5 2.5 0.8</size>
+	    </box>
+	  </geometry>
+	</visual>
+	<collision name="box_col">
+	  <geometry>
+	    <box>
+	      <size>0.5 2.5 0.8</size>
+	    </box>
+	  </geometry>	  
+	</collision>
+      </link>
+      <joint name="box_base" type="fixed">
+	<parent>box_world_link</parent>
+	<child>box_link</child>
+      </joint>
+    </model>
   </world>
 </sdf>

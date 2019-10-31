@@ -9,6 +9,8 @@ from solver.ants.ant import Ant
 from solver.ants.rob_decorator import RobotizedAnt
 from solver.aco_algorithms.ant_system import AntSystem
 from solver.solver import AntSolver
+from plotter.plotter import Plot
+
 
 import pathlib
 import writer
@@ -33,8 +35,10 @@ def main():
                              .format(start, end))
     a = Ant(args.alpha,
             args.beta,
+            args.gamma,
             G,
-            start)
+            start,
+            end)
     rob_ant = RobotizedAnt(a, Robot)
 
     strat = AntSystem(G, args.ant_power, end, args.decay)
@@ -47,3 +51,7 @@ def main():
     log()['MAIN'].log('Solved!')
     with writer.ColumnWriter(input('Input save file name: '), ' ') as w:
         w.write(best, worst, avg)
+    log()['MAIN'].log('Plotting')
+    
+    p = Plot()
+    p.plot(best, worst, avg)

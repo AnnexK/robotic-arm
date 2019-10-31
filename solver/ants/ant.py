@@ -3,6 +3,7 @@ import numpy.random as random
 from copy import deepcopy
 
 from logger import log
+from math import acos, sqrt
 
 
 class AntPath:
@@ -57,11 +58,13 @@ class AntPath:
 
 class Ant:
     """Класс, моделирующий поведение муравья"""
-    def __init__(self, a, b, G, pos):
+    def __init__(self, a, b, c, G, pos, end):
         self.alpha = a
         self.beta = b
+        self.gamma = c
         self.assoc_graph = G
         self._path = AntPath((pos, 0.0))
+        self.target = end
 
     @property
     def pos(self):
@@ -84,11 +87,19 @@ class Ant:
         weight = self.assoc_graph.get_weight(v, w)
         phi = self.assoc_graph.get_phi(v, w)
 
-        log()['ATTR_DEBUG'].log('{}, {}'.format(weight, phi))
+        move_vec = tuple(w_i - v_i for w_i, v_i in zip(w, v))
+        end_vec = tuple(e_i - p_i for e_i, p_i in zip(self.target, self.pos))
+
+        end_vec_len = sqrt(sum(c * c for c in end_vec))
+        dot_pr = sum(a * b for a, b in zip(move_vec, end_vec))
+
+        theta = acos(dot_pr / end_vec_len)
+
+        log()['ATTR_DEBUG'].log('{}, {}, {}'.format(weight, phi, theta))
         if w == inf:
             return 0.0
         else:
-            return phi ** self.alpha * (1/weight) ** self.beta
+            return phi ** self.alpha * (1/weight) ** self.beta * (1 / (1+theta)) ** self.gamma
 
     def pick_edge(self):
         """Совершает перемещение в одну из соседних точек в графе G"""
@@ -143,7 +154,9 @@ class Ant:
     def clone(self):
         ret = Ant(self.alpha,
                   self.beta,
+                  self.gamma,
                   self.assoc_graph,
-                  self.pos)
+                  self.pos,
+                  self.target)
         ret._path = deepcopy(self._path)
         return ret

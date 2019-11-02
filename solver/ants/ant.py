@@ -50,6 +50,11 @@ class AntPath:
     def extract(self, start, end):
         start.prev.next = end.next
         end.next.prev = start.prev
+        cur = start
+        while cur != end:
+            cur = cur.next
+            del cur.prev.next
+            del cur.prev
 
     def clear(self):
         self.sent.prev = self.sent

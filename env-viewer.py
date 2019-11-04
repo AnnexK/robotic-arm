@@ -1,20 +1,33 @@
 #!/bin/python3
 
 import argparse
-import pybullet as pb
+from env import Environment
+import pathlib as path
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('env')
-
+    p.add_argument('sdf')
+    p.add_argument('urdf')
+    p.add_argument('--state', default=None)
     args = p.parse_args()
 
-    s = pb.connect(pb.GUI, options='--opengl2')
+    if args.state is None:
+        state = None
+    else:
+        state = list(float(s) for s in args.state.split(';'))
 
-    model = pb.loadSDF(args.env)
+    sdffile = str(path.Path(args.sdf).resolve())
+    print(sdffile)
+    E = Environment(filename=sdffile)
+    urdffile = str(path.Path(args.urdf).resolve())
+    E.add_robot(filename=urdffile,
+                eff_name='effector')
+    if state is not None:
+        E.robot.state = state
 
     input()
+    del E
 
 
 if __name__ == '__main__':

@@ -6,7 +6,6 @@ from logger import log
 
 from solver.graph_builders.robot_builder import RoboticGraphBuilder
 from solver.ants.ant import Ant
-from solver.ants.rob_decorator import RobotizedAnt
 from solver.aco_algorithms.ant_system import AntSystem
 from solver.solver import AntSolver
 from plotter.plotter import Plot
@@ -24,12 +23,12 @@ def main():
         raise ValueError('one of the args has wrong value')
 
     log()['MAIN'].log('Loading task...')
-    Robot, Env, End, emp_best = env.load_task(pathlib.Path(args.task))
-    Env.set_endpoint(End)
+    Env, End, emp_best = env.load_task(pathlib.Path(args.task))
+
     log()['MAIN'].log('Task loaded!')
     log()['MAIN'].log('Creating solver...')
     G, start, end = RoboticGraphBuilder(
-        Robot, End, args.phi).make_graph()
+        Env.robot, End, args.phi).make_graph()
 
     log()['GRAPH_GRASP'].log('s = {}; e = {}'
                              .format(start, end))
@@ -37,14 +36,13 @@ def main():
             args.beta,
             args.gamma,
             G,
+            Env.robot,
             start,
             end)
-    rob_ant = RobotizedAnt(a, Robot)
 
     strat = AntSystem(G, args.ant_power, end, args.decay)
-    strat.set_proto(rob_ant)
 
-    S = AntSolver(strat)
+    S = AntSolver(strat, a)
     log()['MAIN'].log('Solver created! Solving...')
     best, worst, avg, path = S.solve(args.iters, args.ant_num)
 
@@ -52,6 +50,13 @@ def main():
     with writer.ColumnWriter(input('Input save file name: '), ' ') as w:
         w.write(best, worst, avg)
     log()['MAIN'].log('Plotting')
-    
+
     p = Plot()
     p.plot(best, worst, avg)
+
+    log()['MAIN'].log('Saving state sequence to file...')
+    with writer.PlainWriter(input('Input sequence file name: ')) as w:
+        w.write(list(s[1]) for s in path)
+
+    del Env
+    log()['MAIN'].log('Have a nice day')

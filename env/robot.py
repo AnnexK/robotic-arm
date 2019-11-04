@@ -1,6 +1,6 @@
+from numpy import asarray
 import pybullet as pb
 from math import isclose
-# import json
 
 
 class Robot:
@@ -8,11 +8,33 @@ class Robot:
 об объекте робота и позволяющая производить операции перемещения
 рабочего органа, получения информации о положении рабочего
 органа и проверки на столкновения"""
-    def __init__(self, filename, eff_name,
-                 pos=(0, 0, 0),
-                 orn=(0, 0, 0),
-                 fixed=True,
-                 kin_eps=1e-2):
+    def _get_dof_ids(self):
+        """Получить сочленения со степенями свободы"""
+        # пока что обрабатывает fixed, revolute и prismatic
+        ret = list()
+        for i in range(pb.getNumJoints(self.id,
+                                       physicsClientId=self.s)):
+            # в joint[2] лежит тип сочленения
+            joint = pb.getJointInfo(self.id, i,
+                                    physicsClientId=self.s)
+            if joint[2] == pb.JOINT_REVOLUTE:
+                ret.append(i)
+            elif joint[2] == pb.JOINT_PRISMATIC:
+                ret.append(i)
+        return ret
+
+    def _get_limits(self):
+        lower, upper = [], []
+        for i in range(pb.getNumJoints(self.id,
+                                       physicsClientId=self.s)):
+            joint = pb.getJointInfo(self.id, i,
+                                    physicsClientId=self.s)
+            if joint[2] != pb.JOINT_FIXED:
+                lower.append(joint[8])  # нижний предел
+                upper.append(joint[9])  # верхний предел
+        return lower, upper
+
+    def __init__(self, server=0, **kwargs):
         """Параметры:
 filename -- имя URDF-файла (абсолютный путь)
 eff_name -- имя звена-рабочего органа
@@ -20,15 +42,42 @@ pos -- координаты местоположения базового зве
 orn -- ориентация базового звена (кватернион)
 fixed -- флаг фиксирования положения базы (0/1)
 kin_eps -- значение погрешности для решения ОКЗ"""
+        if 'pos' not in kwargs:
+            kwargs['pos'] = (0, 0, 0)
+        if 'orn' not in kwargs:
+            kwargs['orn'] = (0, 0, 0)
+        if 'fixed' not in kwargs:
+            kwargs['fixed'] = True
+        if 'kin_eps' not in kwargs:
+            kwargs['kin_eps'] = 1e-2
+
+        keys = ['filename',
+                'eff_name',
+                'pos',
+                'orn',
+                'fixed',
+                'kin_eps']
+
+        (filename,
+         eff_name,
+         pos,
+         orn,
+         fixed,
+         kin_eps) = tuple(kwargs[k] for k in keys)
+
         # читаем urdf файл
         try:
+            q_orn = pb.getQuaternionFromEuler(orn)
             self._id = pb.loadURDF(filename,
                                    basePosition=pos,
-                                   baseOrientation=pb.getQuaternionFromEuler(orn),
+                                   baseOrientation=q_orn,
                                    flags=pb.URDF_USE_SELF_COLLISION,
-                                   useFixedBase=fixed)
+                                   useFixedBase=fixed,
+                                   physicsClientId=server)
         except pb.error as err:
             raise ValueError('failed to read urdf file') from err
+
+        self.s = server
 
         self._kin_eps = kin_eps
 
@@ -36,22 +85,25 @@ kin_eps -- значение погрешности для решения ОКЗ"
             # достаем индекс звена-схвата
             self._eff_id = filter(
                 lambda j: j[12].decode() == eff_name,
-                [pb.getJointInfo(self._id, i)
-                 for i in range(pb.getNumJoints(self._id))]
+                [pb.getJointInfo(self._id, i,
+                                 physicsClientId=self.s)
+                 for i in range(pb.getNumJoints(self._id,
+                                                physicsClientId=self.s))]
             ).__next__()[0]
         except StopIteration:
             raise ValueError(
                 'effector with name {} not found'.format(eff_name))
 
         # получаем список индексов звеньев со степенями свободы
-        self._dofs = getDOFIds(self._id)
-        self._lower, self._upper = get_limits(self.id)
+        self._dofs = self._get_dof_ids()
+        self._lower, self._upper = self._get_limits()
 
     def __del__(self):
         """Предназначено для освобождения ресурсов pybullet"""
         try:
             # удалить объект из pb при уничтожении Robot
-            pb.removeBody(self._id)
+            pb.removeBody(self._id,
+                          physicsClientId=self.s)
         except pb.error:
             print("Предупреждение: Нет подключения к серверу")
 
@@ -71,7 +123,9 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
     @property
     def state(self):
-        return [pb.getJointState(self.id, i)[0] for i in self._dofs]
+        return asarray([pb.getJointState(self.id, i,
+                                         physicsClientId=self.s)[0]
+                        for i in self._dofs])
 
     @state.setter
     def state(self, val):
@@ -79,8 +133,9 @@ kin_eps -- значение погрешности для решения ОКЗ"
             raise ValueError('Wrong number of DoFs')
 
         for i, joint in enumerate(self._dofs):
-            pb.resetJointState(self.id, joint, val[i])
-        pb.stepSimulation()
+            pb.resetJointState(self.id, joint, val[i],
+                               physicsClientId=self.s)
+        pb.stepSimulation(physicsClientId=self.s)
 
     def move_to(self, pos, orn=None):
         """Перемещает схват робота в pos с ориентацией orn
@@ -97,11 +152,13 @@ kin_eps -- значение погрешности для решения ОКЗ"
         if orn is None:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos,
                                                maxNumIterations=iters,
-                                               residualThreshold=accuracy)
+                                               residualThreshold=accuracy,
+                                               physicsClientId=self.s)
         else:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos, orn,
                                                maxNumIterations=iters,
-                                               residualThreshold=accuracy)
+                                               residualThreshold=accuracy,
+                                               physicsClientId=self.s)
 
         # задание полученного положения
         self.state = IK
@@ -125,9 +182,11 @@ kin_eps -- значение погрешности для решения ОКЗ"
         obj_set = set()
 
         # широкая фаза
-        for i in range(-1, pb.getNumJoints(self._id)):
+        for i in range(-1, pb.getNumJoints(self._id,
+                                           physicsClientId=self.s)):
             # координаты AABB
-            box_min, box_max = pb.getAABB(self._id, i)
+            box_min, box_max = pb.getAABB(self._id, i,
+                                          physicsClientId=self.s)
 
             # getOverlappingObjects возвращает кортежи,
             # первый элемент которых -- id объекта,
@@ -135,41 +194,18 @@ kin_eps -- значение погрешности для решения ОКЗ"
             # нужен только первый элемент
             ids = [obj[0]
                    for obj in
-                   pb.getOverlappingObjects(box_min, box_max)]
+                   pb.getOverlappingObjects(box_min, box_max,
+                                            physicsClientId=self.s)]
             obj_set |= set(ids)
 
         # узкая фаза
         contacts = []
         for o in obj_set:
-            contacts += pb.getContactPoints(self._id, o)
+            contacts += pb.getContactPoints(self._id, o,
+                                            physicsClientId=self.s)
         return len(contacts) > 0
 
     def get_effector(self):
         """Возвращает координаты центра тяжести рабочего органа"""
-        return pb.getLinkState(self._id, self._eff_id)[0]
-
-
-def getDOFIds(bId):
-    """Получить сочленения со степенями свободы"""
-    # пока что обрабатывает fixed, revolute и prismatic
-    ret = list()
-    for i in range(pb.getNumJoints(bId)):
-        # в joint[2] лежит тип сочленения
-        joint = pb.getJointInfo(bId, i)
-        if joint[2] == pb.JOINT_REVOLUTE:
-            ret.append(i)
-        elif joint[2] == pb.JOINT_PRISMATIC:
-            ret.append(i)
-
-    return ret
-
-
-def get_limits(bId):
-    lower, upper = [], []
-    for i in range(pb.getNumJoints(bId)):
-        joint = pb.getJointInfo(bId, i)
-        if joint[2] != pb.JOINT_FIXED:
-            lower.append(joint[8])  # нижний предел
-            upper.append(joint[9])  # верхний предел
-
-    return lower, upper
+        return pb.getLinkState(self._id, self._eff_id,
+                               physicsClientId=self.s)[0]

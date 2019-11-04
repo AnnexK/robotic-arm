@@ -6,10 +6,18 @@ from logger import log
 from math import acos, sqrt
 
 
+class AntPathData:
+    """Содержимое запоминаемого пути муравья"""
+    def __init__(self, v, weight, state):
+        self.vertex = v
+        self.weight = weight
+        self.state = state
+
+
 class AntPath:
     class PathNode:
         def __init__(self, data=None, prev=None, next=None):
-            self.d = data
+            self.data = data
             self.next = self if next is None else next
             self.prev = self if prev is None else prev
 
@@ -27,7 +35,7 @@ class AntPath:
             if self.cur == self.end.next:
                 raise StopIteration
 
-            ret = self.cur.d
+            ret = self.cur.data
             self.cur = self.cur.next
             return ret
 
@@ -42,8 +50,8 @@ class AntPath:
     def __iter__(self):
         return AntPath.PathIter(self)
 
-    def append(self, v):
-        new = AntPath.PathNode(v, self.end, self.sent)
+    def append(self, data):
+        new = AntPath.PathNode(data, self.end, self.sent)
         self.end.next = new
         self.sent.prev = new
 
@@ -53,8 +61,13 @@ class AntPath:
         cur = start
         while cur != end:
             cur = cur.next
-            del cur.prev.next
-            del cur.prev
+            cur.prev.next = None
+            cur.prev = None
+
+    def pop(self):
+        ret = self.end.data
+        self.extract(self.end, self.end)
+        return ret
 
     def clear(self):
         self.sent.prev = self.sent
@@ -63,17 +76,23 @@ class AntPath:
 
 class Ant:
     """Класс, моделирующий поведение муравья"""
-    def __init__(self, a, b, c, G, pos, end):
+    def __init__(self, a, b, g, graph, robot, start, end):
         self.alpha = a
         self.beta = b
-        self.gamma = c
-        self.assoc_graph = G
-        self._path = AntPath((pos, 0.0))
+        self.gamma = g
+        self.assoc_graph = graph
+        self.robot = robot
+        self.origin = self.robot.get_effector()
+
+        self._path = AntPath(AntPathData(start,
+                                         0.0,
+                                         self.robot.state))
+
         self.target = end
 
     @property
     def pos(self):
-        return self._path.end.d[0]
+        return self._path.end.data
 
     @pos.setter
     def pos(self, value):
@@ -85,48 +104,64 @@ class Ant:
 
     @property
     def path_len(self):
-        ret = sum(v[1] for v in self.path)
+        ret = sum(v.weight for v in self.path)
         return ret
 
-    def edge_attraction(self, v, w):
-        weight = self.assoc_graph.get_weight(v, w)
-        phi = self.assoc_graph.get_phi(v, w)
-
+    def _orient_angle(self, v, w):
         move_vec = tuple(w_i - v_i for w_i, v_i in zip(w, v))
-        end_vec = tuple(e_i - p_i for e_i, p_i in zip(self.target, self.pos))
+        end_vec = tuple(e_i - p_i for e_i, p_i in zip(self.target,
+                                                      self.pos.vertex))
 
         end_vec_len = sqrt(sum(c * c for c in end_vec))
         dot_pr = sum(a * b for a, b in zip(move_vec, end_vec))
 
         theta = acos(dot_pr / end_vec_len)
+        return theta
 
-        log()['ATTR_DEBUG'].log('{}, {}, {}'.format(weight, phi, theta))
+    def edge_attraction(self, v, w):
+        weight = self.assoc_graph.get_weight(v, w)
+        phi = self.assoc_graph.get_phi(v, w)
+
+        theta = self._orient_angle(v, w)
         if w == inf:
             return 0.0
         else:
             return phi ** self.alpha * (1/weight) ** self.beta * (1 / (1+theta)) ** self.gamma
+
+    def _fall_back(self):
+        self.path.pop()
 
     def pick_edge(self):
         """Совершает перемещение в одну из соседних точек в графе G"""
 
         G = self.assoc_graph
 
-        targets = list(G.get_adjacent(self.pos))
+        targets = list(G.get_adjacent(self.pos.vertex))
         # привлекательности ребер
-        attrs = [self.edge_attraction(self.pos, t)
+        attrs = [self.edge_attraction(self.pos.vertex, t)
                  for t in targets]
-        for a in attrs:
-            log()['ATTR_DEBUG'].log(str(a))
 
         total_attr = sum(attrs)
-        # TODO: откат в предыдущую позицию, если total_attr == 0
+
+        if total_attr == 0.0:
+            log()['ATTR_DEBUG'].log('Total attr is 0, falling back')
+            self._fall_back()
+            return
+
         attr = [a / total_attr for a in attrs]
 
         # случайный выбор тут
         choice = random.choice(len(targets), p=attr)
 
-        # добавить в путь (вершина, вес)
-        self.pos = targets[choice], G.get_weight(self.pos, targets[choice])
+        w = G.get_weight(self.pos, targets[choice])
+        # добавить в путь (вершина, вес, состояние)
+        self.pos = AntPathData(targets[choice],
+                               w,
+                               self.robot.state)
+        step = self.robot.kin_eps
+        self.robot.move_to(
+            tuple(self.origin[i] + step * self.pos.vertex[i]
+                  for i in range(3)))
 
     def remove_cycles(self):
         """Извлекает циклы из пути"""
@@ -134,11 +169,12 @@ class Ant:
         while cur_left != self._path.end:
             cur_right = self._path.end
             while cur_right != cur_left:
-                if cur_left.d[0] == cur_right.d[0]:
+                if cur_left.data.vertex == cur_right.data.vertex:
                     self._path.extract(cur_left.next, cur_right)
                     break
                 cur_right = cur_right.prev
             cur_left = cur_left.next
+        self.robot.state = self.path.start.data.state
 
     def deposit_pheromone(self, Q):
         """Распространяет феромон по всем пройденным ребрам"""
@@ -147,12 +183,12 @@ class Ant:
 
         n = self._path.start
         while n != self._path.end:
-            G.add_phi(n.d[0], n.next.d[0], phi)
+            G.add_phi(n.data.vertex, n.next.data.vertex, phi)
             n = n.next
 
     def reset(self):
         """Возвращает муравья к начальному состоянию"""
-        pos = self.path.start.d
+        pos = self.path.start.data
         self._path.clear()
         self._path.append(pos)
 
@@ -161,7 +197,9 @@ class Ant:
                   self.beta,
                   self.gamma,
                   self.assoc_graph,
-                  self.pos,
+                  self.robot,
+                  self.pos.vertex,
                   self.target)
         ret._path = deepcopy(self._path)
+        ret.origin = self.origin
         return ret

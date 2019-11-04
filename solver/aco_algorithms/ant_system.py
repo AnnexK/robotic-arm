@@ -10,35 +10,25 @@ class AntSystem:
         self.ant_power = Q
         self.end = end
         self.rate = decay
-        self.ants = None
-        self.proto_ant = None
         self.best_solution = {'length': inf,
                               'path': []}
 
-    def make_ants(self, amount):
-        if self.proto_ant is None:
-            raise TypeError('No ant specified')
-
-        if self.ants is None:
-            self.ants = [self.proto_ant.clone()
-                         for i in range(amount)]
-        else:
-            for a in self.ants:
-                a.reset()
-
-    def generate_solutions(self):
+    def generate_solutions(self, ants):
         lens = []
-        for i, a in enumerate(self.ants):
+        for i, a in enumerate(ants):
             steps = 0
             log()['ANT'].log('Ant #{}'.format(i+1))
-            while a.pos != self.end:
+            while a.pos.vertex != self.end:
                 a.pick_edge()
                 steps += 1
                 if steps % 1000 == 0:
                     log()['ANT'].log('{} steps'
                                      .format(steps))
             pre_length = a.path_len
+            
+            log()['ANT'].log('Removing cycles...')
             a.remove_cycles()
+            log()['ANT'].log('Cycles removed.')
             length = a.path_len
             lens.append(length)
             log()['ANT'].log('Ant #{} finished'.format(i+1))
@@ -46,7 +36,8 @@ class AntSystem:
             log()['ANT'].log('(pre-remove_cycles: {})'.format(pre_length))
             if length < self.best_solution['length']:
                 self.best_solution['length'] = length
-                self.best_solution['path'] = [i[0] for i in a.path]
+                self.best_solution['path'] = [(i.vertex, i.state)
+                                              for i in a.path]
         return (self.best_solution['length'],
                 max(lens),
                 sum(lens) / len(lens))
@@ -54,14 +45,11 @@ class AntSystem:
     def result(self):
         return self.best_solution['path']
 
-    def set_proto(self, p):
-        self.proto_ant = p
-
-    def update_pheromone(self):
+    def update_pheromone(self, ants):
         # испарение
         self.graph.evaporate(self.rate)
         # отложение
-        for a in self.ants:
+        for a in ants:
             a.deposit_pheromone(self.ant_power)
 
     def daemon_actions(self):

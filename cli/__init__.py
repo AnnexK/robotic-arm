@@ -47,7 +47,7 @@ def main():
     best, worst, avg, path = S.solve(args.iters, args.ant_num)
 
     log()['MAIN'].log('Solved!')
-    with writer.ColumnWriter(input('Input save file name: '), ' ') as w:
+    with writer.ColumnWriter(args.csv, ' ') as w:
         w.write(best, worst, avg)
     log()['MAIN'].log('Plotting')
 
@@ -55,7 +55,7 @@ def main():
     p.plot(best, worst, avg)
 
     log()['MAIN'].log('Saving state sequence to file...')
-    with writer.PlainWriter(input('Input sequence file name: ')) as w:
+    with writer.PlainWriter(args.seq) as w:
         w.write(list(s[1]) for s in path)
 
     del Env

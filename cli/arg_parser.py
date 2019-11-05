@@ -6,7 +6,8 @@ def make_parser():
     ret = argparse.ArgumentParser(
         description='Launch the solver with arguments specified')
     ret.add_argument('task', help='task filename')
-    ret.add_argument('output', help='output filename')
+    ret.add_argument('csv', help='csv stats filename')
+    ret.add_argument('seq', help='q sequence filename')
     ret.add_argument('-a', '--alpha',
                      help='pheromone attractiveness modifier',
                      type=float, default=1.0)

@@ -11,7 +11,8 @@ class Environment:
         """Параметры:
 filename -- имя SDF-файла (абсолютный путь)
 при отсутствии параметра создается пустая внешняя среда"""
-        self.s = pb.connect(pb.GUI if render else pb.DIRECT)
+        self.s = pb.connect(pb.GUI if render else pb.DIRECT,
+                            options='--opengl2' if fallback else '')
         if filename is None:
             self._ids = list()  # пустой
         else:

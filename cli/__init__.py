@@ -23,7 +23,9 @@ def main():
         raise ValueError('one of the args has wrong value')
 
     log()['MAIN'].log('Loading task...')
-    Env, End, emp_best = env.load_task(pathlib.Path(args.task))
+    Env, End, emp_best = env.load_task(pathlib.Path(args.task),
+                                       render=not args.silent,
+                                       fallback=args.fallback)
 
     log()['MAIN'].log('Task loaded!')
     log()['MAIN'].log('Creating solver...')

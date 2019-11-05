@@ -23,7 +23,7 @@ def task_json_parse(dct):
     return dct
 
 
-def load_task(filename):
+def load_task(filename, render, fallback):
     """Загружает параметры задачи из json-файла filename"""
     with open(filename, 'r') as fp:
         task_data = json.load(fp, object_hook=task_json_parse)
@@ -36,7 +36,9 @@ def load_task(filename):
     else:
         sdf_filename = filename.parent / pathlib.Path(task_data['sdf_name'])
 
-    E = Environment(filename=None if sdf_filename is None
+    E = Environment(render,
+                    fallback,
+                    None if sdf_filename is None
                     else str(sdf_filename))
 
     E.set_endpoint(task_data['endpoint'])

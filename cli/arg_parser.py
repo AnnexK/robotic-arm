@@ -32,6 +32,13 @@ def make_parser():
     ret.add_argument('-i', '--iters',
                      help='number of algorithm iterations',
                      type=int, default=1)
+
+    spec_parms = ret.add_mutually_exclusive_group()
+    spec_parms.add_argument('--silent', help='launch solver without GUI',
+                            action='store_true')
+    spec_parms.add_argument('--fallback',
+                            help='launch solver in opengl2 (fallback) mode',
+                            action='store_true')
     return ret
 
 

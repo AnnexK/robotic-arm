@@ -1,6 +1,7 @@
 from numpy import asarray
 import pybullet as pb
 from math import isclose
+from logger import log
 
 
 class Robot:
@@ -97,6 +98,7 @@ kin_eps -- значение погрешности для решения ОКЗ"
         # получаем список индексов звеньев со степенями свободы
         self._dofs = self._get_dof_ids()
         self._lower, self._upper = self._get_limits()
+        self._damping = [0.01 for i in self._dofs]
 
     def __del__(self):
         """Предназначено для освобождения ресурсов pybullet"""
@@ -132,6 +134,12 @@ kin_eps -- значение погрешности для решения ОКЗ"
         if len(val) != len(self._dofs):
             raise ValueError('Wrong number of DoFs')
 
+        if not all(q_min <= q <= q_max
+                   for q_min, q, q_max in zip(self._lower,
+                                              val,
+                                              self._upper)):
+            raise ValueError('Values not in bounds')
+
         for i, joint in enumerate(self._dofs):
             pb.resetJointState(self.id, joint, val[i],
                                physicsClientId=self.s)
@@ -147,21 +155,39 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
         accuracy = self.kin_eps / 2
         iters = round(1/accuracy)
+        ranges = [u - l for u, l in zip(self._upper, self._lower)]
 
+        # pose = list(start_joints)
+        pose = [0.0 for i in start_joints]
         # значение для orn по умолчанию неизвестно
         if orn is None:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos,
                                                maxNumIterations=iters,
+                                               lowerLimits=self._lower,
+                                               upperLimits=self._upper,
+                                               jointRanges=ranges,
+                                               restPoses=pose,
+                                               jointDamping=self._damping,
                                                residualThreshold=accuracy,
                                                physicsClientId=self.s)
         else:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos, orn,
+                                               lowerLimits=self._lower,
+                                               upperLimits=self._upper,
+                                               jointRanges=ranges,
+                                               restPoses=pose,
                                                maxNumIterations=iters,
+                                               jointDamping=self._damping,
                                                residualThreshold=accuracy,
                                                physicsClientId=self.s)
 
         # задание полученного положения
-        self.state = IK
+        try:
+            self.state = IK
+        except ValueError:
+            log()['PYBULLET'].log('unable to set state: vals out of bounds')
+            self.state = start_joints
+            return False
         # проверка полученного решения
         new_pos = self.get_effector()
         if not (isclose(new_pos[0], pos[0], abs_tol=accuracy) and

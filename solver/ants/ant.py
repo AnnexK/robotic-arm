@@ -118,28 +118,30 @@ class Ant:
         theta = acos(dot_pr / end_vec_len)
         return theta
 
-    def edge_attraction(self, v, w):
-        weight = self.assoc_graph.get_weight(v, w)
-        phi = self.assoc_graph.get_phi(v, w)
-
-        theta = self._orient_angle(v, w)
-        if w == inf:
-            return 0.0
-        else:
-            return phi ** self.alpha * (1/weight) ** self.beta * (1 / (1+theta)) ** self.gamma
+    def edge_attractions(self, w_list, p_list, orn_list):
+        return [p ** self.alpha * (1/w ** self.beta) * (1/(1+th)) ** self.gamma
+                for p, w, th in zip(p_list, w_list, orn_list)]
 
     def _fall_back(self):
         self.path.pop()
+        self.robot.state = self.pos.state
 
     def pick_edge(self):
         """Совершает перемещение в одну из соседних точек в графе G"""
 
+        step = self.robot.kin_eps
+        v = self.pos.vertex
         G = self.assoc_graph
 
-        targets = list(G.get_adjacent(self.pos.vertex))
+        targets = list(G.get_adjacent(v))
+        weights = [G.get_weight(v, t)
+                   for t in targets]
+        phi = [G.get_phi(v, t)
+               for t in targets]
+        orients = [self._orient_angle(v, t)
+                   for t in targets]
         # привлекательности ребер
-        attrs = [self.edge_attraction(self.pos.vertex, t)
-                 for t in targets]
+        attrs = self.edge_attractions(weights, phi, orients)
 
         total_attr = sum(attrs)
 
@@ -153,15 +155,15 @@ class Ant:
         # случайный выбор тут
         choice = random.choice(len(targets), p=attr)
 
-        w = G.get_weight(self.pos, targets[choice])
+        self.robot.move_to(
+            tuple(o + step * v
+                  for o, v in zip(self.origin, targets[choice])))
         # добавить в путь (вершина, вес, состояние)
         self.pos = AntPathData(targets[choice],
-                               w,
+                               weights[choice],
                                self.robot.state)
         step = self.robot.kin_eps
-        self.robot.move_to(
-            tuple(self.origin[i] + step * self.pos.vertex[i]
-                  for i in range(3)))
+
 
     def remove_cycles(self):
         """Извлекает циклы из пути"""

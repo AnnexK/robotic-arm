@@ -8,19 +8,3 @@ __pycache__
 
 # python compiled files #
 .pyc
-
-# output files #
-*.csv
-*.txt
-*.png
-*.sol
-results
-
-# tests #
-dijkstra-test.py
-precalc_profile.py
-build_test.py
-
-# simple_test test inputs #
-*.tst
-!test.tst

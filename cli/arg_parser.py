@@ -32,6 +32,9 @@ def make_parser():
     ret.add_argument('-i', '--iters',
                      help='number of algorithm iterations',
                      type=int, default=1)
+	ret.add_argument('--plot',
+					 help='draw a plot after solving',
+					 action='store_true')
 
     spec_parms = ret.add_mutually_exclusive_group()
     spec_parms.add_argument('--silent', help='launch solver without GUI',

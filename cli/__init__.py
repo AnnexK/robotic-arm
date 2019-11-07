@@ -51,14 +51,15 @@ def main():
     log()['MAIN'].log('Solved!')
     with writer.ColumnWriter(args.csv, ' ') as w:
         w.write(best, worst, avg)
-    log()['MAIN'].log('Plotting')
-
-    p = Plot()
-    p.plot(best, worst, avg)
 
     log()['MAIN'].log('Saving state sequence to file...')
     with writer.PlainWriter(args.seq) as w:
         w.write(list(s[1]) for s in path)
-
+	
+	if args.plot:
+		log()['MAIN'].log('Plotting')
+		p = Plot()
+		p.plot(best, worst, avg)
+	
     del Env
     log()['MAIN'].log('Have a nice day')

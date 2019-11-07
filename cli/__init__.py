@@ -56,10 +56,10 @@ def main():
     with writer.PlainWriter(args.seq) as w:
         w.write(list(s[1]) for s in path)
 	
-	if args.plot:
-		log()['MAIN'].log('Plotting')
-		p = Plot()
-		p.plot(best, worst, avg)
+    if args.plot:
+        log()['MAIN'].log('Plotting')
+        p = Plot()
+        p.plot(best, worst, avg)
 	
     del Env
     log()['MAIN'].log('Have a nice day')

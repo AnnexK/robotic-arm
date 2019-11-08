@@ -1,6 +1,6 @@
 from numpy import asarray
 import pybullet as pb
-from math import isclose
+from math import inf, isclose
 from logger import log
 
 
@@ -32,8 +32,12 @@ class Robot:
             joint = pb.getJointInfo(self.id, i,
                                     physicsClientId=self.s)
             if joint[2] != pb.JOINT_FIXED:
-                lower.append(joint[8])  # нижний предел
-                upper.append(joint[9])  # верхний предел
+                if joint[8] > joint[9]:
+                    lower.append(-inf)
+                    upper.append(inf)
+                else:
+                    lower.append(joint[8])  # нижний предел
+                    upper.append(joint[9])  # верхний предел
         return lower, upper
 
     def __init__(self, server=0, **kwargs):
@@ -183,6 +187,7 @@ kin_eps -- значение погрешности для решения ОКЗ"
                                                residualThreshold=accuracy,
                                                physicsClientId=self.s)
 
+        log()['IK'].log(IK)
         # задание полученного положения
         try:
             self.state = IK

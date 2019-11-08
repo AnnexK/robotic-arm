@@ -135,7 +135,7 @@ kin_eps -- значение погрешности для решения ОКЗ"
         if len(val) != len(self._dofs):
             raise ValueError('Wrong number of DoFs')
 
-        for lower, v, upper in zip(self.lower, val, self.upper):
+        for lower, v, upper in zip(self._lower, val, self._upper):
             # нет ограничений на значение
             if lower > upper:
                 continue

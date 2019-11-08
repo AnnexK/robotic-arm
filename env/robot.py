@@ -18,6 +18,7 @@ class Robot:
             # в joint[2] лежит тип сочленения
             joint = pb.getJointInfo(self.id, i,
                                     physicsClientId=self.s)
+            # также обрабатывает continuous сочленения
             if joint[2] == pb.JOINT_REVOLUTE:
                 ret.append(i)
             elif joint[2] == pb.JOINT_PRISMATIC:
@@ -134,11 +135,12 @@ kin_eps -- значение погрешности для решения ОКЗ"
         if len(val) != len(self._dofs):
             raise ValueError('Wrong number of DoFs')
 
-        if not all(q_min <= q <= q_max
-                   for q_min, q, q_max in zip(self._lower,
-                                              val,
-                                              self._upper)):
-            raise ValueError('Values not in bounds')
+        for lower, v, upper in zip(self.lower, val, self.upper):
+            # нет ограничений на значение
+            if lower > upper:
+                continue
+            elif not (lower <= v <= upper):
+                raise ValueError('Values not in bounds')
 
         for i, joint in enumerate(self._dofs):
             pb.resetJointState(self.id, joint, val[i],

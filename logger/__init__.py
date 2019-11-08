@@ -7,5 +7,6 @@ log().add_logger('ANT', stdout)
 log().add_logger('ATTR_DEBUG', stdout)
 log().add_logger('PYBULLET', stdout)
 log().add_logger('GRAPH_GRASP', stdout)
+# log().add_logger('IK', stdout)
 
 log().log('loggers loaded normally')

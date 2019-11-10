@@ -1,4 +1,6 @@
 from numpy import asarray
+from numpy.random import random
+
 import pybullet as pb
 from math import inf, isclose
 from logger import log
@@ -103,7 +105,12 @@ kin_eps -- значение погрешности для решения ОКЗ"
         # получаем список индексов звеньев со степенями свободы
         self._dofs = self._get_dof_ids()
         self._lower, self._upper = self._get_limits()
+        self.ranges = [u - l for u, l in zip(self._upper, self._lower)]
         self._damping = [0.01 for i in self._dofs]
+
+        self.pose = [(l+u)/2 if l != -inf
+                     else 0.0
+                     for l, u in zip(self._lower, self._upper)]
 
     def __del__(self):
         """Предназначено для освобождения ресурсов pybullet"""
@@ -161,18 +168,15 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
         accuracy = self.kin_eps / 2
         iters = round(1/accuracy)
-        ranges = [u - l for u, l in zip(self._upper, self._lower)]
 
-        # pose = list(start_joints)
-        pose = [0.0 for i in start_joints]
         # значение для orn по умолчанию неизвестно
         if orn is None:
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos,
                                                maxNumIterations=iters,
                                                lowerLimits=self._lower,
                                                upperLimits=self._upper,
-                                               jointRanges=ranges,
-                                               restPoses=pose,
+                                               jointRanges=self.ranges,
+                                               restPoses=self.pose,
                                                jointDamping=self._damping,
                                                residualThreshold=accuracy,
                                                physicsClientId=self.s)
@@ -180,8 +184,8 @@ kin_eps -- значение погрешности для решения ОКЗ"
             IK = pb.calculateInverseKinematics(self.id, self.eff_id, pos, orn,
                                                lowerLimits=self._lower,
                                                upperLimits=self._upper,
-                                               jointRanges=ranges,
-                                               restPoses=pose,
+                                               jointRanges=self.ranges,
+                                               restPoses=self.pose,
                                                maxNumIterations=iters,
                                                jointDamping=self._damping,
                                                residualThreshold=accuracy,

@@ -89,6 +89,7 @@ class Ant:
                                          self.robot.state))
 
         self.target = end
+        self.deposits = True
 
     @property
     def pos(self):
@@ -162,8 +163,9 @@ class Ant:
         self.pos = AntPathData(targets[choice],
                                weights[choice],
                                self.robot.state)
-        step = self.robot.kin_eps
 
+    def reset_robot(self):
+        self.robot.state = self.path.start.data.state
 
     def remove_cycles(self):
         """Извлекает циклы из пути"""
@@ -176,23 +178,27 @@ class Ant:
                     break
                 cur_right = cur_right.prev
             cur_left = cur_left.next
-        self.robot.state = self.path.start.data.state
+
+    def disable_deposit(self):
+        self.deposits = False
 
     def deposit_pheromone(self, Q):
         """Распространяет феромон по всем пройденным ребрам"""
-        G = self.assoc_graph
-        phi = Q / self.path_len
+        if self.deposits:
+            G = self.assoc_graph
+            phi = Q / self.path_len
 
-        n = self._path.start
-        while n != self._path.end:
-            G.add_phi(n.data.vertex, n.next.data.vertex, phi)
-            n = n.next
+            n = self._path.start
+            while n != self._path.end:
+                G.add_phi(n.data.vertex, n.next.data.vertex, phi)
+                n = n.next
 
     def reset(self):
         """Возвращает муравья к начальному состоянию"""
         pos = self.path.start.data
         self._path.clear()
         self._path.append(pos)
+        self.deposits = True
 
     def clone(self):
         ret = Ant(self.alpha,

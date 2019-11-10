@@ -42,7 +42,7 @@ def main():
             start,
             end)
 
-    strat = AntSystem(G, args.ant_power, end, args.decay)
+    strat = AntSystem(G, args.ant_power, end, args.decay, args.limit)
 
     S = AntSolver(strat, a)
     log()['MAIN'].log('Solver created! Solving...')
@@ -53,13 +53,14 @@ def main():
         w.write(best, worst, avg)
 
     log()['MAIN'].log('Saving state sequence to file...')
+
     with writer.PlainWriter(args.seq) as w:
-        w.write(list(s[1]) for s in path)
-	
+        w.write(list(p[1]) for p in path)
+
     if args.plot:
         log()['MAIN'].log('Plotting')
         p = Plot()
         p.plot(best, worst, avg)
-	
+
     del Env
     log()['MAIN'].log('Have a nice day')

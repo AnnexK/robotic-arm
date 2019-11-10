@@ -34,7 +34,10 @@ def make_parser():
                      type=int, default=1)
     ret.add_argument('--plot',
                      help='draw a plot after solving',
-					 action='store_true')
+                     action='store_true')
+    ret.add_argument('--limit',
+                     help='limit amount of ant steps',
+                     type=int, default=250000)
 
     spec_parms = ret.add_mutually_exclusive_group()
     spec_parms.add_argument('--silent', help='launch solver without GUI',
@@ -53,6 +56,7 @@ def check_args(args):
              args.decay > 0.0 and args.decay < 1.0,
              args.ant_power > 0.0,
              args.ant_num > 0,
-             args.iters > 0, ]
+             args.iters > 0,
+             args.limit >= 0, ]
 
-    return reduce(lambda x, y: x and y, tests, True)
+    return all(tests)

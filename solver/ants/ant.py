@@ -90,6 +90,8 @@ class Ant:
 
         self.target = end
         self.deposits = True
+        # мн-во посещенных вершин
+        self.visited = set([start])
 
     @property
     def pos(self):
@@ -120,12 +122,21 @@ class Ant:
         return theta
 
     def edge_attractions(self, w_list, p_list, orn_list):
-        return [p ** self.alpha * (1/w ** self.beta) * (1/(1+th)) ** self.gamma
+        def attraction(w, p, th):
+            if w == inf:
+                return 0.0
+            else:
+                d = 1/w
+                ang = 1/(1+th)
+                return p ** self.alpha * (d ** self.beta) * ang ** self.gamma
+
+        return [attraction(w, p, th)
                 for p, w, th in zip(p_list, w_list, orn_list)]
 
     def _fall_back(self):
-        self.path.pop()
+        v = self.path.pop()
         self.robot.state = self.pos.state
+        self.visited.remove(v.vertex)
 
     def pick_edge(self):
         """Совершает перемещение в одну из соседних точек в графе G"""
@@ -134,7 +145,8 @@ class Ant:
         v = self.pos.vertex
         G = self.assoc_graph
 
-        targets = list(G.get_adjacent(v))
+        eligible = set(G.get_adjacent(v)) - self.visited
+        targets = list(eligible)
         weights = [G.get_weight(v, t)
                    for t in targets]
         phi = [G.get_phi(v, t)
@@ -164,20 +176,10 @@ class Ant:
                                weights[choice],
                                self.robot.state)
 
+        self.visited.add(targets[choice])
+
     def reset_robot(self):
         self.robot.state = self.path.start.data.state
-
-    def remove_cycles(self):
-        """Извлекает циклы из пути"""
-        cur_left = self._path.start
-        while cur_left != self._path.end:
-            cur_right = self._path.end
-            while cur_right != cur_left:
-                if cur_left.data.vertex == cur_right.data.vertex:
-                    self._path.extract(cur_left.next, cur_right)
-                    break
-                cur_right = cur_right.prev
-            cur_left = cur_left.next
 
     def disable_deposit(self):
         self.deposits = False
@@ -199,6 +201,8 @@ class Ant:
         self._path.clear()
         self._path.append(pos)
         self.deposits = True
+        self.visited = set()
+        self.visited.add(pos.vertex)
 
     def clone(self):
         ret = Ant(self.alpha,
@@ -209,5 +213,6 @@ class Ant:
                   self.pos.vertex,
                   self.target)
         ret._path = deepcopy(self._path)
+        ret.visited = deepcopy(self.visited)
         ret.origin = self.origin
         return ret

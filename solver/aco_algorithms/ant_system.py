@@ -29,17 +29,10 @@ class AntSystem:
                 log()['ANT'].log(f'Ant #{i+1} hit the limit, aborting...')
                 a.disable_deposit()
             else:
-                pre_length = a.path_len
-
-                log()['ANT'].log('Removing cycles...')
-                a.remove_cycles()
-
-                log()['ANT'].log('Cycles removed.')
                 length = a.path_len
                 lens.append(length)
                 log()['ANT'].log('Ant #{} finished'.format(i+1))
                 log()['ANT'].log('Path length: {}'.format(length))
-                log()['ANT'].log('(pre-remove_cycles: {})'.format(pre_length))
                 if length < self.best_solution['length']:
                     self.best_solution['length'] = length
                     self.best_solution['path'] = [(i.vertex, i.state)

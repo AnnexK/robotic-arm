@@ -9,7 +9,7 @@ class RoboticGraphBuilder:
         self.robot = r
         self.phi = base
         self.end = end
-        self.lower = 1e-9
+        self.lower = 1e-12
 
     def make_graph(self):
         ret = GridGraph(

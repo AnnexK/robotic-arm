@@ -47,6 +47,10 @@ class AntPath:
     def end(self):
         return self.sent.prev
 
+    @property
+    def empty(self):
+        return self.start == self.sent and self.end == self.sent
+
     def __iter__(self):
         return AntPath.PathIter(self)
 
@@ -92,6 +96,10 @@ class Ant:
         self.deposits = True
         # мн-во посещенных вершин
         self.visited = set([start])
+        # длина отступления
+        self.fallback_len = 0
+        # сколько еще нужно возвращаться после отступления
+        self.required_fallback = 0
 
     @property
     def pos(self):
@@ -135,8 +143,15 @@ class Ant:
 
     def _fall_back(self):
         v = self.path.pop()
-        self.robot.state = self.pos.state
-        self.visited.remove(v.vertex)
+        if self.path.empty:
+            if self.fallback_len == 1:
+                raise RuntimeError('Something something terrible news!')
+            else:
+                self.path.append(v)
+                self.fallback_len = 0
+        else:
+            self.robot.state = self.pos.state
+            self.visited.remove(v.vertex)
 
     def pick_edge(self):
         """Совершает перемещение в одну из соседних точек в графе G"""
@@ -158,28 +173,38 @@ class Ant:
 
         total_attr = sum(attrs)
 
+        # некуда идти
         if total_attr == 0.0:
             log()['ATTR_DEBUG'].log('Total attr is 0, falling back')
-            self._fall_back()
-            return
+            self.fallback_len += 1
+            for i in range(self.fallback_len - self.required_fallback):
+                self._fall_back()
+            self.required_fallback = self.fallback_len
+        # есть куда идти
+        else:
+            attr = [a / total_attr for a in attrs]
 
-        attr = [a / total_attr for a in attrs]
+            # случайный выбор тут
+            choice = random.choice(len(targets), p=attr)
 
-        # случайный выбор тут
-        choice = random.choice(len(targets), p=attr)
+            self.robot.move_to(
+                tuple(o + step * v
+                      for o, v in zip(self.origin, targets[choice])))
 
-        self.robot.move_to(
-            tuple(o + step * v
-                  for o, v in zip(self.origin, targets[choice])))
-        # добавить в путь (вершина, вес, состояние)
-        self.pos = AntPathData(targets[choice],
-                               weights[choice],
-                               self.robot.state)
+            # добавить в путь (вершина, вес, состояние)
+            self.pos = AntPathData(targets[choice],
+                                   weights[choice],
+                                   self.robot.state)
+            self.visited.add(targets[choice])
+            if self.required_fallback > 0:
+                self.required_fallback -= 1
+            else:
+                self.fallback_len = 0
 
-        self.visited.add(targets[choice])
-
-    def reset_robot(self):
+    def reset_iter(self):
         self.robot.state = self.path.start.data.state
+        self.visited = set()
+        self.visited.add(self.path.start.data.vertex)
 
     def disable_deposit(self):
         self.deposits = False
@@ -203,6 +228,8 @@ class Ant:
         self.deposits = True
         self.visited = set()
         self.visited.add(pos.vertex)
+        self.fallback_len = 0
+        self.required_fallback = 0
 
     def clone(self):
         ret = Ant(self.alpha,
@@ -215,4 +242,6 @@ class Ant:
         ret._path = deepcopy(self._path)
         ret.visited = deepcopy(self.visited)
         ret.origin = self.origin
+        ret.fallback_len = self.fallback_len
+        ret.required_fallback = self.required_fallback
         return ret

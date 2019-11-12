@@ -37,7 +37,7 @@ class AntSystem:
                     self.best_solution['length'] = length
                     self.best_solution['path'] = [(i.vertex, i.state)
                                                   for i in a.path]
-            a.reset_robot()
+            a.reset_iter()
 
         return (self.best_solution['length'],
                 max(lens),

@@ -4,11 +4,10 @@ from logger import log
 
 
 class AntSystem:
-    def __init__(self, G, Q, end, decay, limit):
+    def __init__(self, G, Q, decay, limit):
         random.seed()
         self.graph = G
         self.ant_power = Q
-        self.end = end
         self.rate = decay
         self.best_solution = {'length': inf,
                               'path': []}
@@ -19,13 +18,13 @@ class AntSystem:
         for i, a in enumerate(ants):
             steps = 0
             log()['ANT'].log('Ant #{}'.format(i+1))
-            while a.pos.vertex != self.end and steps < self.limit:
+            while not a.complete and steps < self.limit:
                 a.pick_edge()
                 steps += 1
                 if steps % 1000 == 0:
                     log()['ANT'].log('{} steps'
                                      .format(steps))
-            if a.pos.vertex != self.end:
+            if not a.complete:
                 log()['ANT'].log(f'Ant #{i+1} hit the limit, aborting...')
                 a.disable_deposit()
             else:
@@ -37,11 +36,15 @@ class AntSystem:
                     self.best_solution['length'] = length
                     self.best_solution['path'] = [(i.vertex, i.state)
                                                   for i in a.path]
+            # вернуться к состоянию до итерации
             a.reset_iter()
 
-        return (self.best_solution['length'],
-                max(lens),
-                sum(lens) / len(lens))
+        if lens == []:
+            return (None, None, None)
+        else:
+            return (self.best_solution['length'],
+                    max(lens),
+                    sum(lens) / len(lens))
 
     def result(self):
         return self.best_solution['path']

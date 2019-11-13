@@ -42,7 +42,7 @@ def main():
             start,
             end)
 
-    strat = AntSystem(G, args.ant_power, end, args.decay, args.limit)
+    strat = AntSystem(G, args.ant_power, args.decay, args.limit)
 
     S = AntSolver(strat, a)
     log()['MAIN'].log('Solver created! Solving...')

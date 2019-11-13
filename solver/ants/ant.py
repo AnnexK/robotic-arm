@@ -118,6 +118,10 @@ class Ant:
         ret = sum(v.weight for v in self.path)
         return ret
 
+    @property
+    def complete(self):
+        return self.pos.vertex == self.target
+
     def _orient_angle(self, v, w):
         move_vec = tuple(w_i - v_i for w_i, v_i in zip(w, v))
         end_vec = tuple(e_i - p_i for e_i, p_i in zip(self.target,
@@ -207,7 +211,9 @@ class Ant:
         self.visited.add(self.path.start.data.vertex)
 
     def disable_deposit(self):
-        self.path.clear()
+        v = self._path.start.data
+        self._path.clear()
+        self._path.append(v)
 
     def deposit_pheromone(self, Q):
         """Распространяет феромон по всем пройденным ребрам"""
@@ -222,7 +228,7 @@ class Ant:
 
     def reset(self):
         """Возвращает муравья к начальному состоянию"""
-        pos = self.path.start.data
+        pos = self._path.start.data
         self._path.clear()
         self._path.append(pos)
         self.deposits = True

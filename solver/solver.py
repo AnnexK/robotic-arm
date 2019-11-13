@@ -20,15 +20,19 @@ class AntSolver:
         best_paths = []
         worst_paths = []
         avg_paths = []
-
-        for i in range(iters):
+        i = 1
+        while i <= iters:
             ants = self.make_ants(ants_n)
-            log()['SOLVER'].log('Iter {}'.format(i+1))
+            log()['SOLVER'].log(f'Iter {i}')
             best, worst, avg = self.S.generate_solutions(ants)
-            best_paths.append(best)
-            worst_paths.append(worst)
-            avg_paths.append(avg)
-            self.S.update_pheromone(ants)
-            self.S.daemon_actions()
+            if best is None:
+                log()['SOLVER'].log(f'No results on iter {i}, restarting')
+            else:
+                best_paths.append(best)
+                worst_paths.append(worst)
+                avg_paths.append(avg)
+                self.S.update_pheromone(ants)
+                self.S.daemon_actions()
+                i = i + 1
 
         return best_paths, worst_paths, avg_paths, self.S.result()

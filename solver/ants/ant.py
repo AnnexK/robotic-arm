@@ -93,7 +93,7 @@ class Ant:
                                          self.robot.state))
 
         self.target = end
-        self.deposits = True
+
         # мн-во посещенных вершин
         self.visited = set([start])
         # длина отступления
@@ -207,11 +207,11 @@ class Ant:
         self.visited.add(self.path.start.data.vertex)
 
     def disable_deposit(self):
-        self.deposits = False
+        self.path.clear()
 
     def deposit_pheromone(self, Q):
         """Распространяет феромон по всем пройденным ребрам"""
-        if self.deposits:
+        if self.pos.vertex == self.target:
             G = self.assoc_graph
             phi = Q / self.path_len
 

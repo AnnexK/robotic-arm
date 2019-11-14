@@ -37,7 +37,6 @@ filename -- имя SDF-файла (абсолютный путь)
             pb.removeBody(self.endpoint)
         if self.robot is not None:
             del self._robot
-            self._robot = None
         pb.disconnect(self.s)
 
     def set_endpoint(self, p):

@@ -114,13 +114,10 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
     def __del__(self):
         """Предназначено для освобождения ресурсов pybullet"""
-        try:
-            # удалить объект из pb при уничтожении Robot
-            pb.removeBody(self._id,
-                          physicsClientId=self.s)
-        except pb.error:
-            print("Предупреждение: Нет подключения к серверу")
-
+        # удалить объект из pb при уничтожении Robot
+        pb.removeBody(self._id,
+                      physicsClientId=self.s)
+            
     # id для доступа средствами pb
     @property
     def id(self):

@@ -53,7 +53,7 @@ def check_args(args):
              args.beta >= 0.0,
              args.gamma >= 0.0,
              args.phi > 0.0,
-             args.decay => 0.0 and args.decay <= 1.0,
+             args.decay >= 0.0 and args.decay <= 1.0,
              args.ant_power > 0.0,
              args.ant_num > 0,
              args.iters > 0,

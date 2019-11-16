@@ -47,6 +47,6 @@ class GridGraph:
 
     def evaporate(self, value):
         '''Производит испарение феромона на всем графе'''
-        if not (0 < value < 1):
+        if not (0 <= value <= 1):
             raise ValueError('Decay rate not in bounds (0 < rho < 1)')
         self.phi.evaporate(value)

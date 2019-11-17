@@ -49,7 +49,7 @@ def main():
     best, worst, avg, path = S.solve(args.iters, args.ant_num)
 
     log()['MAIN'].log('Solved!')
-    with writer.ColumnWriter(args.csv, ' ') as w:
+    with writer.ColumnWriter(args.csv, ',') as w:
         w.write(best, worst, avg)
 
     log()['MAIN'].log('Saving state sequence to file...')

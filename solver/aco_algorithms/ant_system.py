@@ -53,7 +53,8 @@ class AntSystem:
         # испарение
         self.graph.evaporate(self.rate)
         # отложение
-        for a in ants:
+        for i, a in enumerate(ants):
+            log()['PHI_DEPOSIT'].log(f'Ant #{i+1} deposits: ')
             a.deposit_pheromone(self.ant_power)
 
     def daemon_actions(self):

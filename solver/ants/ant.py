@@ -217,14 +217,16 @@ class Ant:
 
     def deposit_pheromone(self, Q):
         """Распространяет феромон по всем пройденным ребрам"""
-        if self.pos.vertex == self.target:
+        if self.complete:
             G = self.assoc_graph
             phi = Q / self.path_len
-
+            log()['PHI_DEPOSIT'].log(f'{phi} pheromone.')
             n = self._path.start
             while n != self._path.end:
                 G.add_phi(n.data.vertex, n.next.data.vertex, phi)
                 n = n.next
+        else:
+            log()['PHI_DEPOSIT'].log('no pheromone.')
 
     def reset(self):
         """Возвращает муравья к начальному состоянию"""

@@ -223,7 +223,12 @@ class Ant:
             log()['PHI_DEPOSIT'].log(f'{phi} pheromone.')
             n = self._path.start
             while n != self._path.end:
-                G.add_phi(n.data.vertex, n.next.data.vertex, phi)
+                cur = n.data.vertex
+                nxt = n.next.data.vertex
+                log()['PHI_DEPOSIT'].log(f'Edge ({cur}; {nxt})')
+                log()['PHI_DEPOSIT'].log(f'Predep={G.get_phi(cur, nxt)}')
+                G.add_phi(cur, nxt, phi)
+                log()['PHI_DEPOSIT'].log(f'Postdep={G.get_phi(cur, nxt)}')
                 n = n.next
         else:
             log()['PHI_DEPOSIT'].log('no pheromone.')

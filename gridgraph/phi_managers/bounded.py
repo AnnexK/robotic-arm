@@ -16,12 +16,15 @@ class BoundedPhiManager(PhiManager):
         # минимальному
         if not self.frozen:
             super().evaporate(rho)
-            # значение общего уровня феромона
-            # теперь меньше минимального.
-            # установим его в минимум
-            # и "заморозим", предотвращая дальнейшие
-            # попытки его изменить.
+            # дополнительное испарение не нужно
+            custom_evap = 0
+
             if self.common_phi < self.lower:
+                # значение общего уровня феромона
+                # теперь меньше минимального.
+                # установим его в минимум
+                # и "заморозим", предотвращая дальнейшие
+                # попытки его изменить.
                 delta = self.lower - self.common_phi
                 self.common_phi = self.lower
                 self.frozen = True
@@ -33,14 +36,15 @@ class BoundedPhiManager(PhiManager):
             # т. к. для них уже установлен нижний предел
             # (phi_min + 0)
             delta = rho * self.common_phi
+            # нужно дополнительное испарение
+            custom_evap = 1
 
         # если нужно модифицировать значения
         # для каждого посещенного ребра:
         if self.frozen:
             for k in self.phi:
-                self.phi[k] = self.phi[k] - delta
-                if self.phi[k] < 0.0:
-                    self.phi[k] = 0.0
+                self.phi[k] = max((1-rho*custom_evap) * self.phi[k] - delta,
+                                  0.0)
 
     def add_phi(self, v, w, val):
         delta = self.upper - self.common_phi

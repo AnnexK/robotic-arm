@@ -22,7 +22,7 @@ class AntSystem:
                 a.pick_edge()
                 steps += 1
                 if steps % 10000 == 0:
-                    log()['ANT'].log('{} '
+                    log()['ANT'].log('{} steps'
                                      .format(steps))
             if not a.complete:
                 log()['ANT'].log(f'Ant #{i+1} hit the limit, aborting...')

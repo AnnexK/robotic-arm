@@ -8,5 +8,3 @@ __pycache__
 
 # python compiled files #
 .pyc
-
-tests/example.txt

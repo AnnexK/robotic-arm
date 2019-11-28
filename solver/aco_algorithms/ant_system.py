@@ -21,8 +21,8 @@ class AntSystem:
             while not a.complete and steps < self.limit:
                 a.pick_edge()
                 steps += 1
-                if steps % 1000 == 0:
-                    log()['ANT'].log('{} steps'
+                if steps % 10000 == 0:
+                    log()['ANT'].log('{} '
                                      .format(steps))
             if not a.complete:
                 log()['ANT'].log(f'Ant #{i+1} hit the limit, aborting...')

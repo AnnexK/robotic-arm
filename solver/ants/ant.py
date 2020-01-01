@@ -14,70 +14,6 @@ class AntPathData:
         self.state = state
 
 
-class AntPath:
-    class PathNode:
-        def __init__(self, data=None, prev=None, next=None):
-            self.data = data
-            self.next = self if next is None else next
-            self.prev = self if prev is None else prev
-
-    def __init__(self, v):
-        self.sent = AntPath.PathNode()
-        self.sent.next = AntPath.PathNode(v, self.sent, self.sent)
-        self.sent.prev = self.sent.next
-
-    class PathIter:
-        def __init__(self, path):
-            self.cur = path.start
-            self.end = path.end
-
-        def __next__(self):
-            if self.cur == self.end.next:
-                raise StopIteration
-
-            ret = self.cur.data
-            self.cur = self.cur.next
-            return ret
-
-    @property
-    def start(self):
-        return self.sent.next
-
-    @property
-    def end(self):
-        return self.sent.prev
-
-    @property
-    def empty(self):
-        return self.start == self.sent and self.end == self.sent
-
-    def __iter__(self):
-        return AntPath.PathIter(self)
-
-    def append(self, data):
-        new = AntPath.PathNode(data, self.end, self.sent)
-        self.end.next = new
-        self.sent.prev = new
-
-    def extract(self, start, end):
-        start.prev.next = end.next
-        end.next.prev = start.prev
-        cur = start
-        while cur != end:
-            cur = cur.next
-            cur.prev.next = None
-            cur.prev = None
-
-    def pop(self):
-        ret = self.end.data
-        self.extract(self.end, self.end)
-        return ret
-
-    def clear(self):
-        self.sent.prev = self.sent
-        self.sent.next = self.sent
-
-
 class Ant:
     """Класс, моделирующий поведение муравья"""
     def __init__(self, a, b, g, graph, robot, start, end):
@@ -88,10 +24,7 @@ class Ant:
         self.robot = robot
         self.origin = self.robot.get_effector()
 
-        self._path = AntPath(AntPathData(start,
-                                         0.0,
-                                         self.robot.state))
-
+        self.path = [AntPathData(start, 0.0, self.robot.state)]
         self.target = end
 
         # мн-во посещенных вершин
@@ -103,15 +36,11 @@ class Ant:
 
     @property
     def pos(self):
-        return self._path.end.data
+        return self.path[-1]
 
     @pos.setter
     def pos(self, value):
-        self._path.append(value)
-
-    @property
-    def path(self):
-        return self._path
+        self.path.append(value)
 
     @property
     def path_len(self):
@@ -147,7 +76,7 @@ class Ant:
 
     def _fall_back(self):
         v = self.path.pop()
-        if self.path.empty:
+        if not self.path:
             if self.fallback_len == 1:
                 raise RuntimeError('Something something terrible news!')
             else:
@@ -206,14 +135,14 @@ class Ant:
                 self.fallback_len = 0
 
     def reset_iter(self):
-        self.robot.state = self.path.start.data.state
+        self.robot.state = self.path[0].state
         self.visited = set()
-        self.visited.add(self.path.start.data.vertex)
+        self.visited.add(self.path[0].vertex)
 
     def disable_deposit(self):
-        v = self._path.start.data
-        self._path.clear()
-        self._path.append(v)
+        v = self.path[0]
+        self.path.clear()
+        self.path.append(v)
 
     def deposit_pheromone(self, Q):
         """Распространяет феромон по всем пройденным ребрам"""
@@ -221,26 +150,16 @@ class Ant:
             G = self.assoc_graph
             phi = Q / self.path_len
             log()['PHI_DEPOSIT'].log(f'{phi} pheromone.')
-            n = self._path.start
-            while n != self._path.end:
-                cur = n.data.vertex
-                nxt = n.next.data.vertex
-                log()['PHI_DEPOSIT'].log(f'Edge ({cur}; {nxt})')
-                log()['PHI_DEPOSIT'].log(f'Predep={G.get_phi(cur, nxt)}')
-                G.add_phi(cur, nxt, phi)
-                log()['PHI_DEPOSIT'].log(f'Postdep={G.get_phi(cur, nxt)}')
-                n = n.next
+            for v, w in zip(self.path[0:-1], self.path[1:]):
+                G.add_phi(v.vertex, w.vertex, phi)
         else:
             log()['PHI_DEPOSIT'].log('no pheromone.')
 
     def reset(self):
         """Возвращает муравья к начальному состоянию"""
-        pos = self._path.start.data
-        self._path.clear()
-        self._path.append(pos)
-        self.deposits = True
+        self.disable_deposit()
         self.visited = set()
-        self.visited.add(pos.vertex)
+        self.visited.add(self.path[0].vertex)
         self.fallback_len = 0
         self.required_fallback = 0
 
@@ -252,7 +171,7 @@ class Ant:
                   self.robot,
                   self.pos.vertex,
                   self.target)
-        ret._path = deepcopy(self._path)
+        ret.path = deepcopy(self.path)
         ret.visited = deepcopy(self.visited)
         ret.origin = self.origin
         ret.fallback_len = self.fallback_len

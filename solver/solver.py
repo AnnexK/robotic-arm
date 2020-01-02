@@ -21,6 +21,7 @@ class AntSolver:
         worst_paths = []
         avg_paths = []
         i = 1
+        repeats = 0
         while i <= iters:
             ants = self.make_ants(ants_n)
             log()['SOLVER'].log(f'Iter {i}')
@@ -33,6 +34,18 @@ class AntSolver:
                 avg_paths.append(avg)
                 self.S.update_pheromone(ants)
                 self.S.daemon_actions()
-                i = i + 1
+                if i > 1 and avg_paths[-1] == avg_paths[-2]:
+                    log()['SOLVER'].log(f'Same avg, times: {repeats+1}')
+                    repeats = repeats + 1
+                    if repeats == 10:
+                        log()['SOLVER'].log(f'Too many repeats, wrapping up')
+                        best_paths += [best_paths[-1]] * (iters-i)
+                        worst_paths += [worst_paths[-1]] * (iters-i)
+                        avg_paths += [avg_paths[-1]] * (iters-i)
+                        i = iters
+                else:
+                    repeats = 0
+            i = i + 1
+
 
         return best_paths, worst_paths, avg_paths, self.S.result()

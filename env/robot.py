@@ -237,7 +237,8 @@ kin_eps -- значение погрешности для решения ОКЗ"
         for o in obj_set:
             contacts += pb.getContactPoints(self._id, o,
                                             physicsClientId=self.s)
-        return len(contacts) > 0
+
+        return (not (not contacts)) and any(c[8] < -0.002 for c in contacts)
 
     def get_effector(self):
         """Возвращает координаты центра тяжести рабочего органа"""

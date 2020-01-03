@@ -5,7 +5,7 @@
       <static>1</static>
       <link name="floor_world_link"/>
       <link name="floor_link">
-        <pose>0 0 -0.099 0 0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <gravity>0</gravity>
         <visual name="floor_visual">
           <geometry>

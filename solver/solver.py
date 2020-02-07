@@ -1,4 +1,5 @@
 from logger import log
+import traceback
 
 
 class AntSolver:
@@ -47,7 +48,8 @@ class AntSolver:
                     else:
                         repeats = 0
                     i = i + 1
-        except Exception:
+        except Exception as e:
+            traceback.print_exc()
             log()['SOLVER'].log('Something bad happened, saving results...')
         finally:
             return best_paths, worst_paths, avg_paths, self.S.result()

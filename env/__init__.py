@@ -42,15 +42,14 @@ def load_task(filename, render, fallback):
                     else str(sdf_filename))
 
     E.set_endpoint(task_data['endpoint'])
+
     E.add_robot(filename=str(urdf_filename),
                 eff_name=task_data['effector_name'],
                 pos=task_data['pos'],
                 orn=task_data['orn'],
                 fixed=task_data['fixed_base'],
-                kin_eps=task_data['eps'])
-
-    if task_data['dofs'] is not None:
-        E.robot.state = task_data['dofs']
+                kin_eps=task_data['eps'],
+                dofs=task_data['dofs'])
 
     log()['PYBULLET'].log('environment loaded successfully')
 

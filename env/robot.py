@@ -108,6 +108,8 @@ kin_eps -- значение погрешности для решения ОКЗ"
         self.ranges = [u - l for u, l in zip(self._upper, self._lower)]
         self._damping = [0.01 for i in self._dofs]
 
+        if 'dofs' in kwargs and kwargs['dofs']:
+            self.state = kwargs['dofs']
         self.pose = [(l+u)/2 if l != -inf
                      else 0.0
                      for l, u in zip(self._lower, self._upper)]
@@ -117,7 +119,7 @@ kin_eps -- значение погрешности для решения ОКЗ"
         # удалить объект из pb при уничтожении Robot
         pb.removeBody(self._id,
                       physicsClientId=self.s)
-            
+
     # id для доступа средствами pb
     @property
     def id(self):
@@ -134,9 +136,9 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
     @property
     def state(self):
-        return asarray([pb.getJointState(self.id, i,
-                                         physicsClientId=self.s)[0]
-                        for i in self._dofs])
+        return [pb.getJointState(self.id, i,
+                                 physicsClientId=self.s)[0]
+                for i in self._dofs]
 
     @state.setter
     def state(self, val):
@@ -145,13 +147,12 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
         for lower, v, upper in zip(self._lower, val, self._upper):
             # нет ограничений на значение
-            if lower > upper:
-                continue
-            elif not (lower <= v <= upper):
+            if not (lower <= v <= upper):
                 raise ValueError('Values not in bounds')
 
         for i, joint in enumerate(self._dofs):
             pb.resetJointState(self.id, joint, val[i],
+                               targetVelocity=0.0,
                                physicsClientId=self.s)
         pb.stepSimulation(physicsClientId=self.s)
 
@@ -188,7 +189,7 @@ kin_eps -- значение погрешности для решения ОКЗ"
                                                residualThreshold=accuracy,
                                                physicsClientId=self.s)
 
-        log()['IK'].log(IK)
+        # log()['IK'].log(IK)
         # задание полученного положения
         try:
             self.state = IK
@@ -197,6 +198,7 @@ kin_eps -- значение погрешности для решения ОКЗ"
             self.state = start_joints
             return False
         # проверка полученного решения
+        
         new_pos = self.get_effector()
         if not (isclose(new_pos[0], pos[0], abs_tol=accuracy) and
                 isclose(new_pos[1], pos[1], abs_tol=accuracy) and

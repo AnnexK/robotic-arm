@@ -120,9 +120,9 @@ class Ant:
             # случайный выбор тут
             choice = random.choice(len(targets), p=attr)
 
-            self.robot.move_to(
-                tuple(o + step * v
-                      for o, v in zip(self.origin, targets[choice])))
+            chosen = tuple(o+step*v
+                           for o, v in zip(self.origin, targets[choice]))
+            self.robot.move_to(chosen)
 
             # добавить в путь (вершина, вес, состояние)
             self.pos = AntPathData(targets[choice],

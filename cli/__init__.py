@@ -6,7 +6,7 @@ from logger import log
 
 from solver.graph_builders.robot_builder import RoboticGraphBuilder
 from solver.ants.ant import Ant
-from solver.aco_algorithms.ant_system import AntSystem
+from solver import ElitistAS
 from solver.solver import AntSolver
 from plotter.plotter import Plot
 
@@ -42,8 +42,11 @@ def main():
             start,
             end)
 
-    strat = AntSystem(G, args.ant_power, args.decay, args.limit)
-
+    # strat = AntSystem(G, args.ant_power, args.decay, args.limit)
+    strat = ElitistAS(G, args.ant_power,
+                      args.decay,
+                      args.limit,
+                      args.elite_power)
     S = AntSolver(strat, a)
     log()['MAIN'].log('Solver created! Solving...')
     best, worst, avg, path = S.solve(args.iters, args.ant_num)

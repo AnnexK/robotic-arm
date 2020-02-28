@@ -12,5 +12,6 @@ log().add_logger('GRAPH_GRASP', stdout)
 log().add_logger('FATAL', stdout)
 # log().add_logger('COLLISION', stdout)
 log().add_logger('STATE', stdout)
+log().add_logger('EAS', stdout)
 
 log().log('loggers loaded normally')

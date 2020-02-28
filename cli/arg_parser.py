@@ -39,6 +39,12 @@ def make_parser():
                      help='limit amount of ant steps',
                      type=int, default=250000)
 
+    # elitist AS elite power
+    # default equals 0
+    ret.add_argument('-e', '--elite-power',
+                     help='elite ant power (for EAS)',
+                     type=float, default=0.0)
+
     spec_parms = ret.add_mutually_exclusive_group()
     spec_parms.add_argument('--silent', help='launch solver without GUI',
                             action='store_true')
@@ -57,6 +63,7 @@ def check_args(args):
              args.ant_power > 0.0,
              args.ant_num > 0,
              args.iters > 0,
-             args.limit >= 0, ]
+             args.limit >= 0,
+             args.elite_power >= 0.0, ]
 
     return all(tests)

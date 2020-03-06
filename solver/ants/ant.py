@@ -52,6 +52,9 @@ class Ant:
         return self.pos.vertex == self.target
 
     def _orient_angle(self, v, w):
+        if self.gamma == 0.0:
+            return 1.0
+
         move_vec = tuple(w_i - v_i for w_i, v_i in zip(w, v))
         end_vec = tuple(e_i - p_i for e_i, p_i in zip(self.target,
                                                       self.pos.vertex))

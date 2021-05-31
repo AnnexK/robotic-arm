@@ -1,6 +1,6 @@
-from gridgraph.graph import GridGraph
-from gridgraph.weight_calcs.robotic import RobotWeight
-from gridgraph.phi_managers.bounded import BoundedPhiManager as pm
+from graphs.graph import GridGraph
+from graphs.weight_calcs.robotic import RobotWeight
+from graphs.phi_managers.bounded import BoundedPhiManager as pm
 from math import inf
 
 
@@ -9,7 +9,7 @@ class RoboticGraphBuilder:
         self.robot = r
         self.phi = base
         self.end = end
-        self.lower = 1e-12
+        self.lower = 1e-8
 
     def make_graph(self):
         ret = GridGraph(
@@ -17,10 +17,4 @@ class RoboticGraphBuilder:
             pm(self.phi, self.lower, inf)
         )
 
-        eps = self.robot.kin_eps
-
-        origin = self.robot.get_effector()
-        diff = tuple(self.end[i] - origin[i] for i in range(3))
-        endpoint = tuple(round(diff[i] / eps) for i in range(3))
-
-        return ret, (0, 0, 0), endpoint
+        return ret

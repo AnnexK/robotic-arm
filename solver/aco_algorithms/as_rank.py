@@ -14,12 +14,8 @@ class ASRank(AntSystem):
         # если муравьев меньше, чем рангов,
         # то использовать количество муравьев
         # вместо количества рангов
-        if len(ants) > self.rank_n:
-            diff = 0
-        else:
-            diff = self.rank_n - len(self.ants)
+        ranked_ants = min(self.rank_n, len(ants))
 
-        ranked_ants = self.rank_n - diff
         for r in range(ranked_ants):
             phi = self.ant_power * (ranked_ants - r)
             ants[r].deposit_pheromone(phi)

@@ -1,21 +1,12 @@
-import matplotlib.pyplot as plt
+from .mux import Mux
+from abc import ABCMeta, abstractmethod
 
-class Plot:
-    num = 0
+# Объект-звено от коммутатора до плоттера
+# Коммутатор записывает в него данные с звена от объекта данных
+# и заставляет звено направить оповещение связанному со звеном
+# плоттеру
 
-    def __init__(self):
-        self.id = Plot.num
-        Plot.num += 1
-
-    def plot(self, *data):
-        plt.figure(self.id)
-        
-        for d in data:
-            e = enumerate(d)
-            x, y = [], []
-            for p in e:
-                x.append(p[0]+1)
-                y.append(p[1])
-            plt.plot(x, y)
-
-        plt.show()
+class Plotter(metaclass=ABCMeta):
+    @abstractmethod
+    def plot_point(self, link):
+        pass

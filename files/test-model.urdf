@@ -124,11 +124,12 @@
     </inertial>
   </link>
 
-  <joint name="world_joint" type="continuous">
+  <joint name="world_joint" type="revolute">
     <parent link="base_link"/>
     <child link="link0"/>
     <origin xyz="0 0 0"/>
     <axis xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="0" velocity="0"/>
   </joint>
   
   <joint name="joint1" type="revolute">
@@ -159,5 +160,3 @@
   </joint>
       
 </robot>
-  
-       

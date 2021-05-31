@@ -4,7 +4,8 @@ from cli.arg_parser_prm import make_parser as prm_parser, check_args as prm_chec
 import env
 
 from logger import log
-from planner.prm_planner import ACOStockPlanner, ACOPRMPlanner
+from planner.stock_planner import ACOStockPlanner
+from planner.prm_planner import ACOPRMPlanner
 
 import pathlib
 import writer

@@ -136,9 +136,10 @@ kin_eps -- значение погрешности для решения ОКЗ"
 
     @property
     def state(self):
-        return [pb.getJointState(self.id, i,
-                                 physicsClientId=self.s)[0]
-                for i in self._dofs]
+        return tuple(
+            pb.getJointState(self.id, i, physicsClientId=self.s)[0]
+            for i in self._dofs
+        )
 
     @state.setter
     def state(self, val):
@@ -156,6 +157,14 @@ kin_eps -- значение погрешности для решения ОКЗ"
                                physicsClientId=self.s)
         pb.stepSimulation(physicsClientId=self.s)
 
+    @property
+    def lower(self):
+        return self._lower
+
+    @property
+    def upper(self):
+        return self._upper
+    
     def move_to(self, pos, orn=None):
         """Перемещает схват робота в pos с ориентацией orn
 Возвращает true, если перемещение удалось

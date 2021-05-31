@@ -1,49 +1,55 @@
 from logger import log
+from plotter.plottable import Plottable
+from plotter.mux import Mux, PMLink
+from math import inf
+
+
 import traceback
 
 
-class AntSolver:
+class AntSolver(Plottable):
     """Класс, моделирующий решение задачи"""
     def __init__(self, strat, ant):
         self.S = strat
         self.p_ant = ant
-        self.ants = None
+        self.min_iter = PMLink('min')
+        self.max_iter = PMLink('max')
+        self.avg_iter = PMLink('avg')
+        Mux().register_plottable_link(self,self.min_iter)
+        Mux().register_plottable_link(self,self.max_iter)
+        Mux().register_plottable_link(self,self.avg_iter)
+        self.min_iter.y = inf
 
-    def make_ants(self, num):
-        if self.ants is None:
-            self.ants = [self.p_ant.clone() for i in range(num)]
-        else:
-            for a in self.ants:
-                a.reset()
-        return self.ants
-
+    def __del__(self):
+        Mux().deregister_plottable(self)
+    
     def solve(self, iters=1, ants_n=20):
-        best_paths = []
-        worst_paths = []
-        avg_paths = []
         i = 1
         repeats = 0
         try:
             while i <= iters:
-                ants = self.make_ants(ants_n)
+                ants = [self.p_ant.clone() for i in range(ants_n)]
                 log()['SOLVER'].log(f'Iter {i}')
-                best, worst, avg = self.S.generate_solutions(ants)
-                if best is None:
+                self.S.generate_solutions(ants)
+                if not any(a.complete for a in ants):
                     log()['SOLVER'].log(f'No results on iter {i}, restarting')
                 else:
-                    best_paths.append(best)
-                    worst_paths.append(worst)
-                    avg_paths.append(avg)
+                    prev_avg = self.avg_iter.y
+                    self.min_iter.y = min(self.min_iter.y, min(a.path_len for a in ants))
+                    self.max_iter.y = max(a.path_len for a in ants)
+                    self.avg_iter.y = sum(a.path_len for a in ants) / len(ants)
+                    self.min_iter.x = self.max_iter.x = self.avg_iter.x = float(i)
+                    self.announce_point(self.min_iter)
+                    self.announce_point(self.max_iter)
+                    self.announce_point(self.avg_iter)
+
                     self.S.update_pheromone(ants)
                     self.S.daemon_actions()
-                    if i > 1 and avg_paths[-1] == avg_paths[-2]:
+                    if i > 1 and self.avg_iter.y == prev_avg:
                         log()['SOLVER'].log(f'Same avg, times: {repeats+1}')
                         repeats = repeats + 1
                         if repeats == 10:
                             log()['SOLVER'].log(f'Too many repeats, wrapping up')
-                            best_paths += [best_paths[-1]] * (iters-i)
-                            worst_paths += [worst_paths[-1]] * (iters-i)
-                            avg_paths += [avg_paths[-1]] * (iters-i)
                             i = iters
                     else:
                         repeats = 0
@@ -52,4 +58,4 @@ class AntSolver:
             traceback.print_exc()
             log()['SOLVER'].log('Something bad happened, saving results...')
         finally:
-            return best_paths, worst_paths, avg_paths, self.S.result()
+            return self.S.result()

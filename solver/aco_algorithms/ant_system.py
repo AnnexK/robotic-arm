@@ -1,18 +1,22 @@
 import numpy.random as random
 from math import inf
 from logger import log
+from copy import deepcopy
 
 
 class AntSystem:
-    def __init__(self, G, Q, decay, limit):
+    def __init__(self, G, Q, decay, limit, daemon):
         random.seed()
         self.graph = G
         self.ant_power = Q
         self.rate = decay
-        self.best_solution = {'length': inf,
-                              'path': []}
-        self.limit = inf if limit <= 0 else limit
-
+        # последовательность вершин лучшего решения
+        self.best_solution = []
+        # длина лучшего решения
+        self.best_length = inf
+        self.limit = inf if limit == 0 else limit
+        self.daemon = daemon
+        
     def generate_solutions(self, ants):
         lens = []
         for i, a in enumerate(ants):
@@ -26,28 +30,19 @@ class AntSystem:
                                      .format(steps))
             if not a.complete:
                 log()['ANT'].log(f'Ant #{i+1} hit the limit, aborting...')
-                a.disable_deposit()
             else:
                 length = a.path_len
                 lens.append(length)
                 log()['ANT'].log('Ant #{} finished'.format(i+1))
                 log()['ANT'].log('Path length: {}'.format(length))
-                if length < self.best_solution['length']:
-                    self.best_solution['length'] = length
-                    self.best_solution['path'] = [(i.vertex, i.state)
-                                                  for i in a.path]
+                if length < self.best_length:
+                    self.best_length = length
+                    self.best_solution = deepcopy(a.path)
             # вернуться к состоянию до итерации
-            a.reset_iter()
-
-        if lens == []:
-            return (None, None, None)
-        else:
-            return (self.best_solution['length'],
-                    max(lens),
-                    sum(lens) / len(lens))
+            a.reset()
 
     def result(self):
-        return self.best_solution['path']
+        return self.best_solution
 
     def update_pheromone(self, ants):
         # испарение
@@ -58,4 +53,4 @@ class AntSystem:
             a.deposit_pheromone(self.ant_power)
 
     def daemon_actions(self):
-        pass
+        self.daemon.daemon_actions()

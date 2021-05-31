@@ -2,16 +2,16 @@ from .ant_system import AntSystem
 from logger import log
 
 class ElitistAS(AntSystem):
-    def __init__(self, G, Q, end, decay, Q_e):
-        super().__init__(G, Q, end, decay)
+    def __init__(self, G, Q, decay, limit, daemon, Q_e):
+        super().__init__(G, Q, decay, limit, daemon)
         self.elite_power = Q_e
 
     def update_pheromone(self, ants):
         super().update_pheromone(ants)
-        path_len = self.best_solution['length']
-        phi = self.elite_power / path_len
+        L = self.best_length
+        phi = self.elite_power / L
+        bs = self.best_solution
 
-        log()['EAS'].log(f'depositing {phi} pheromone on len={path_len}')
-        for v, w in zip(self.best_solution['path'][:-1],
-                        self.best_solution['path'][1:]):
-            self.graph.add_phi(v[0], w[0], phi)
+        log()['EAS'].log(f'depositing {phi} pheromone on len={L}')
+        for v, w in zip(bs[:-1], bs[1:]):
+            self.graph.add_phi(v, w, phi)

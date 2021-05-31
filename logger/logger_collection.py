@@ -1,5 +1,5 @@
 from .logger import Logger
-from .singleton import Singleton
+from util.singleton import Singleton
 from sys import stderr
 from typing import TextIO
 

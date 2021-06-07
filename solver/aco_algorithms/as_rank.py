@@ -2,8 +2,8 @@ from .ant_system import AntSystem
 
 
 class ASRank(AntSystem):
-    def __init__(self, G, Q, end, decay, rank_num):
-        super().__init__(G, Q, end, decay)
+    def __init__(self, G, Q, decay, limit, rank_num, daemon):
+        super().__init__(G, Q, decay, limit, daemon)
         self.rank_n = rank_num
 
     def update_pheromone(self, ants):

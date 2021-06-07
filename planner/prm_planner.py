@@ -90,7 +90,11 @@ class ACOPRMPlanner:
         plotter.mux.Mux().register_plotter_link(W, S, W.max_name, 'max')
         plotter.mux.Mux().register_plotter_link(W, S, W.avg_name, 'avg')
 
-        path = S.solve(self.aco.m, self.aco.i)
+        Plot = plotter.mpl_plotter.MPLPlotter()
+        plotter.mux.Mux().register_plotter_link(Plot, S, 'min', 'min')
+        plotter.mux.Mux().register_plotter_link(Plot, S, 'max', 'max')
+        plotter.mux.Mux().register_plotter_link(Plot, S, 'avg', 'avg')
+        path = S.solve(self.aco.i, self.aco.m)
 
         del S
         del alg
@@ -99,5 +103,6 @@ class ACOPRMPlanner:
         del prm
         del g
         del W
+        del Plot
 
         return path

@@ -14,3 +14,9 @@ __pycache__
 *.csv
 # except those in tests/ subdir
 !tests/**/*.csv
+
+# venv
+pyvenv.cfg
+# windows specific
+Lib/
+Scripts/

@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from .plotter import Plotter
+from .plotter import Plotter, Mux
 
 
 class Point:
@@ -15,6 +15,11 @@ class MPLPlotter(Plotter):
         self.id = MPLPlotter.num
         self.point_rows = dict()
         MPLPlotter.num += 1
+        plt.show(block=False)
+
+    def __del__(self):
+        Mux().deregister_plotter(self)
+        plt.show()
 
     def plot_point(self, link):
         if link not in self.point_rows:
@@ -26,4 +31,5 @@ class MPLPlotter(Plotter):
         for r in self.point_rows:
             points = self.point_rows[r]
             plt.plot([p.x for p in points], [p.y for p in points])
-        plt.show()
+        plt.draw()
+        plt.pause(0.1)

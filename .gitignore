@@ -9,3 +9,8 @@ __pycache__
 # python compiled files #
 .pyc
 .vscode/*
+
+# ignore csv files #
+*.csv
+# except those in tests/ subdir
+!tests/**/*.csv

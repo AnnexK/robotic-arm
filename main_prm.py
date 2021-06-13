@@ -1,5 +1,4 @@
-from cli import main_prm
-from sys import argv
+from client import main_prm
 
 
 main_prm()

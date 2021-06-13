@@ -1,5 +1,4 @@
 import argparse
-from functools import reduce
 
 
 def make_parser():
@@ -8,15 +7,23 @@ def make_parser():
     ret.add_argument('task', help='task filename')
     ret.add_argument('csv', help='csv stats filename')
     ret.add_argument('seq', help='q sequence filename')
+    # PRM
+    ret.add_argument('--kmax',
+                     help='Amount of vertices in PRM',
+                     type=int)
+    ret.add_argument('--threshold',
+                     help='Pheromone threshold for reroute daemon',
+                     type=float)
+    ret.add_argument('--nmax',
+                     help='Max amount of neighbours to consider in PRM',
+                     type=int, default=15)
+    # ACO
     ret.add_argument('-a', '--alpha',
                      help='pheromone attractiveness modifier',
                      type=float, default=1.0)
     ret.add_argument('-b', '--beta',
                      help='weight attractiveness modifier',
                      type=float, default=1.0)
-    ret.add_argument('-g', '--gamma',
-                     help='angle attractiveness modifier',
-                     type=float, default=0.0)
     ret.add_argument('-p', '--phi',
                      help='base pheromone level',
                      type=float, default=0.1)
@@ -52,18 +59,3 @@ def make_parser():
                             help='launch solver in opengl2 (fallback) mode',
                             action='store_true')
     return ret
-
-
-def check_args(args):
-    tests = [args.alpha >= 0.0,
-             args.beta >= 0.0,
-             args.gamma >= 0.0,
-             args.phi > 0.0,
-             args.decay >= 0.0 and args.decay <= 1.0,
-             args.ant_power > 0.0,
-             args.ant_num > 0,
-             args.iters > 0,
-             args.limit >= 0,
-             args.elite_power >= 0.0, ]
-
-    return all(tests)

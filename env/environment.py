@@ -1,60 +1,56 @@
 import pybullet as pb
-from logger import log
 from .robot import Robot
+
+from typing import List
+from .types import Vector3
+from .taskdata import TaskData
 
 
 class Environment:
     """Обертка над объектами pybullet, содержащая информацию
 об объектах внешней среды и предназначенная для хранения информации
 и удобного освобождения ресурсов"""
-    def __init__(self, render=True, fallback=False, filename=None):
+    def __init__(self, render: bool, fallback: bool, td: TaskData):
         """Параметры:
 filename -- имя SDF-файла (абсолютный путь)
 при отсутствии параметра создается пустая внешняя среда"""
-        self.s = pb.connect(pb.GUI if render else pb.DIRECT,
-                            options='--opengl2' if fallback else '')
-        if filename is None:
-            self._ids = list()  # пустой
+        self.s: int = pb.connect( #type: ignore
+            pb.GUI if render else pb.DIRECT, #type: ignore
+            options='--opengl2' if fallback else ''
+        )
+        if not td.sdf:
+            self._ids: List[int] = list()  # пустой
         else:
             try:
-                self._ids = pb.loadSDF(filename,
+                self._ids = pb.loadSDF(td.sdf, #type: ignore
                                        physicsClientId=self.s)
-            except pb.error:
+            except pb.error: #type: ignore
                 raise ValueError('failed to read SDF file')
 
-        self.endpoint = -1
-        self._robot = None
-
-    def __getitem__(self, i):
-        """Возвращает идентификатор PB i-го объекта"""
-        return self._ids[i]
+        self.endpoint_obj: int = self.set_endpoint(td.target_pos)
+        self.endpoint: Vector3 = td.target_pos
+        self._robot = Robot(self.s, td)
 
     def __del__(self):
         """Предназначено для освобождения ресурсов"""
         for i in self._ids:
-            pb.removeBody(i)
-        if self.endpoint >= 0:
-            pb.removeBody(self.endpoint)
-        if self.robot is not None:
-            del self._robot
-        pb.disconnect(self.s)
+            pb.removeBody(i) #type: ignore
+        pb.removeBody(self.endpoint_obj) #type: ignore
+        del self._robot
+        pb.disconnect(self.s) #type: ignore
 
-    def set_endpoint(self, p):
-        visual = pb.createVisualShape(shapeType=pb.GEOM_SPHERE,
-                                      radius=0.05,
-                                      rgbaColor=[1., 0., 0., 1.])
-        self.endpoint = pb.createMultiBody(baseVisualShapeIndex=visual,
-                                           basePosition=p)
+    def set_endpoint(self, p: Vector3) -> int:
+        visual: int = pb.createVisualShape(shapeType=pb.GEOM_SPHERE, #type: ignore
+                                           radius=0.05,
+                                           rgbaColor=[1., 0., 0., 1.])
+        mb: int = pb.createMultiBody(baseVisualShapeIndex=visual, #type: ignore
+                                     basePosition=p)
+        return mb
 
     @property
-    def robot(self):
+    def robot(self) -> Robot:
         return self._robot
 
-    def add_robot(self, **kwargs):
-        if self._robot is not None:
-            raise ValueError('Robot already present')
-        try:
-            self._robot = Robot(self.s, **kwargs)
-        except KeyError as k:
-            raise ValueError('missing required parameter: {}'
-                             .format(k.args[0]))
+    @property
+    def target(self) -> Vector3:
+        return self.endpoint

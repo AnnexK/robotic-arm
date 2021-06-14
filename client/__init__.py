@@ -56,7 +56,7 @@ def main():
 
     with open(args.seq, 'w') as fp:
         for s in plan:
-            fp.write(str(s))
+            fp.write(f'{s}\n')
 
     del Env
     log()['MAIN'].log('Have a nice day')

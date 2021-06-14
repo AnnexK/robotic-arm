@@ -1,15 +1,16 @@
-from numpy import inf
-import numpy.random as random
 from copy import deepcopy
 
-from logger import log
 from math import acos, sqrt
 from .base import BaseAnt as Ant
+from graphs.gridgraph.vertex import GGVertex as V
+from graphs import PhiGraph
+from env.robot import Robot
+from env.types import Vector3
 
 
-class CartesianAnt(Ant):
+class CartesianAnt(Ant[V]):
     """Класс, моделирующий поведение муравья для старого алгоритма"""
-    def __init__(self, a, b, g, graph, robot, start, end):
+    def __init__(self, a: float, b: float, g: float, graph: PhiGraph[V], robot: Robot, start: V, end: V):
         super().__init__(a, b, graph, start, end)
 
         # derived-specific
@@ -22,29 +23,35 @@ class CartesianAnt(Ant):
         self.gamma = g
 
     @property
-    def pos(self):
+    def pos(self) -> V:
         return super().pos
     
     @pos.setter
-    def pos(self, value):
+    def pos(self, value: V):
         # вычисляем вес и добавляем в список
         prev_pos = super().pos
-        super(CartesianAnt, CartesianAnt).pos.fset(self,value)
+        
+        # вызов сеттера для свойства базового класса
+        super(CartesianAnt, CartesianAnt).pos.fset(self, value) # type: ignore
+        
         self.weights.append(self.g.get_weight(prev_pos, value))
 
         # перемещаем робота в вершину
         step = self.robot.kin_eps
-        new_eff = tuple(o+step*v
-                        for o, v in zip(self.origin, value))
+        new_eff: Vector3 = (
+            self.origin[0]+step*value[0],
+            self.origin[1]+step*value[1],
+            self.origin[2]+step*value[2]
+        )
+        
         self.robot.move_to(new_eff)
         self.states.append(self.robot.state)
 
     @property
-    def path_len(self):
+    def path_len(self) -> float:
         return sum(self.weights)
 
-    # derived-specific
-    def _orient_angle(self, v, w):
+    def _orient_angle(self, v: V, w: V) -> float:
         if self.gamma == 0.0:
             return 1.0
 
@@ -57,9 +64,8 @@ class CartesianAnt(Ant):
 
         theta = acos(dot_pr / end_vec_len)
         return theta
-    # /derived-specific
 
-    def attraction(self, v, w):
+    def attraction(self, v: V, w: V) -> float:
         val = super().attraction(v, w)
         th = self._orient_angle(v, w)
         u = 1 / (1 + th)
@@ -77,7 +83,7 @@ class CartesianAnt(Ant):
         self.robot.state = self.states[0]
     
     # overridable base
-    def clone(self):
+    def clone(self) -> Ant[V]:
         ret = CartesianAnt(self.alpha,
                            self.beta,
                            self.gamma,

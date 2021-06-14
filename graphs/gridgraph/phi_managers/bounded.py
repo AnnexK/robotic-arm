@@ -1,23 +1,25 @@
-from .base import PhiManager
+from .base import BasePhiManager
+from ..gridgraph import GGVertex as V
 
 
-class BoundedPhiManager(PhiManager):
-    def __init__(self, base, lower, upper):
+class BoundedPhiManager(BasePhiManager):
+    def __init__(self, base: float, lower: float, upper: float):
         if not (lower <= base <= upper):
             raise ValueError('Base phi not in bounds')
 
         super().__init__(base)
         self.lower = lower
         self.upper = upper
-        self.frozen = False
+        self.frozen: bool = False
 
-    def evaporate(self, rho):
+    def evaporate(self, rate: float):
+        delta = 0.0
         # если общее кол-во феромона еще не равно
         # минимальному
         if not self.frozen:
-            super().evaporate(rho)
+            super().evaporate(rate)
             # дополнительное испарение не нужно
-            custom_evap = 0
+            custom_evap: int = 0
 
             if self.common_phi < self.lower:
                 # значение общего уровня феромона
@@ -35,18 +37,18 @@ class BoundedPhiManager(PhiManager):
             # для непосещенных делать этого нет необходимости,
             # т. к. для них уже установлен нижний предел
             # (phi_min + 0)
-            delta = rho * self.common_phi
+            delta = rate * self.common_phi
             # нужно дополнительное испарение
-            custom_evap = 1
+            custom_evap: int = 1
 
         # если нужно модифицировать значения
         # для каждого посещенного ребра:
         if self.frozen:
             for k in self.phi:
-                self.phi[k] = max((1-rho*custom_evap) * self.phi[k] - delta,
+                self.phi[k] = max((1-rate*custom_evap) * self.phi[k] - delta,
                                   0.0)
 
-    def add_phi(self, v, w, val):
+    def add_phi(self, v: V, w: V, val: float):
         delta = self.upper - self.common_phi
         key = self._get_key(v, w)
         if key not in self.phi:

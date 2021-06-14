@@ -1,14 +1,14 @@
 from .logger import Logger
 from util.singleton import Singleton
 from sys import stderr
-from typing import TextIO
+from typing import TextIO, Dict
 
 
 class LoggerCollection(metaclass=Singleton):
     def __init__(self):
         self.slog_name = 'lc_system'
-        self.loggers = {self.slog_name: Logger(self.slog_name,
-                                               stderr)}
+        self.loggers: Dict[str, Logger] = {self.slog_name: Logger(self.slog_name,
+                                                                  stderr)}
 
     def add_logger(self, name: str, fp: TextIO):
         if name in self.loggers and self[name]:

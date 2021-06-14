@@ -1,37 +1,51 @@
+from logger.logger_collection import LoggerCollection as log
+from client.prmparams import PRMParams
+from client.acoparams import ACOParams
 from solver import BaseAnt, ElitistAS, AntSolver, NullDaemon, PRMRerouteDaemon
 import plotter
-from graphs.linkgraph import LinkGraph
-from graphs.prm.prm import PRM
-from graphs.metrics.eff_movement import EffectorDisplacementMetric
-from graphs.metrics.euclid import EuclideanMetric
+from graphs.prm import PRMGraph
+from graphs.prm import PRM
+from graphs.prm.metrics.euclid import EuclideanMetric
+from planner.planner import Planner, Plan
+from env.environment import Environment
 
-class ACOPRMPlanner:
-    def __init__(self, aco, prm, limit, elite):
+
+
+class ACOPRMPlanner(Planner):
+    def __init__(self, aco: ACOParams, prm: PRMParams, out: str, plot: bool):
         self.aco = aco
-        self.limit = limit
-        self.elite = elite
         self.prm = prm
+        self.out = out
+        self.plot = plot
 
-    def plan(self, env, goal):
+    def plan(self, env: Environment) -> Plan:
         R = env.robot
+        goal = env.target
         vstart = R.state
         if R.check_collisions():
             raise Exception('Init configuration in obstacle space!')
 
-        g = LinkGraph()
+        g = PRMGraph()
         prm = PRM(
-            self.prm.n,
+            self.prm.k,
             EuclideanMetric(),
             R,
             self.aco.phi
         )
 
         # PRM build phase
-        for i in range(self.prm.k):
+        for i in range(self.prm.n):
+            if (i+1) % 100 == 0:
+                log()['PRM'].log(f'Generating vertex {i+1}')
             v = prm.generate_vertex()
             g.add_vertex(v)
-        for v in g.vertices:
+        for i, v in enumerate(g.vertices):
+            if (i+1) % 100 == 0:
+                log()['PRM'].log(f'Finding nearest for vertex #{i+1}')
             nearest = prm.find_nearest(g, v)
+            
+            if (i+1) % 100 == 0:
+                log()['PRM'].log(f'Connecting nearest for vertex #{i+1}')
             for n in nearest:
                 prm.try_connect(g, v, n)
 
@@ -78,22 +92,19 @@ class ACOPRMPlanner:
             g,
             self.aco.q,
             self.aco.rho,
-            self.limit,
+            self.aco.limit,
             reroute,
-            self.elite
+            self.aco.elite
         )
 
         S = AntSolver(alg, ant)
 
-        W = plotter.csv_writer.CSVWriter('current.csv')
-        plotter.mux.Mux().register_plotter_link(W, S, W.min_name, 'min')
-        plotter.mux.Mux().register_plotter_link(W, S, W.max_name, 'max')
-        plotter.mux.Mux().register_plotter_link(W, S, W.avg_name, 'avg')
+        W = plotter.csv_writer.CSVWriter(self.out, S.get_links())
 
-        Plot = plotter.mpl_plotter.MPLPlotter()
-        plotter.mux.Mux().register_plotter_link(Plot, S, 'min', 'min')
-        plotter.mux.Mux().register_plotter_link(Plot, S, 'max', 'max')
-        plotter.mux.Mux().register_plotter_link(Plot, S, 'avg', 'avg')
+        Plot = plotter.mpl_plotter.MPLPlotter() if self.plot else plotter.null.NullPlotter()
+        for L in S.get_links():
+            L.attach(Plot)
+
         path = S.solve(self.aco.i, self.aco.m)
 
         del S

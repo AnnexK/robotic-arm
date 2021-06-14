@@ -1,13 +1,18 @@
+from __future__ import annotations
+
+from typing import Generic, TypeVar
+
 from numpy import inf
 import numpy.random as random
 from copy import deepcopy
 
 from logger import log
+from graphs import PhiGraph
 
-
-class BaseAnt:
+V = TypeVar('V')
+class BaseAnt(Generic[V]):
     """Класс, моделирующий поведение муравья"""
-    def __init__(self, a, b, graph, start, end):
+    def __init__(self, a: float, b: float, graph: PhiGraph[V], start: V, end: V):
         self.alpha = a
         self.beta = b
         self.g = graph
@@ -16,32 +21,32 @@ class BaseAnt:
         # мн-во посещенных вершин
         self.visited = set([start])
         # длина отступления
-        self.fallback_len = 0
+        self.fallback_len: int = 0
         # сколько еще нужно возвращаться после отступления
-        self.required_fallback = 0
+        self.required_fallback: int = 0
         # путь
         self.path = [start]
 
     @property
-    def pos(self):
+    def pos(self) -> V:
         return self.path[-1]
 
     @pos.setter
-    def pos(self, value):
+    def pos(self, value: V):
         self.path.append(value)
 
     @property
-    def path_len(self):
+    def path_len(self) -> float:
         P = self.path
         ret = sum(self.g.get_weight(v, w) for v, w in zip(P[:-1], P[1:]))
         return ret
 
     @property
-    def complete(self):
+    def complete(self) -> bool:
         return self.pos == self.target
 
     # overridable base
-    def attraction(self, v, w):
+    def attraction(self, v: V, w: V):
         Wg = self.g.get_weight(v, w)
         if Wg == inf:
             return 0.0
@@ -74,20 +79,20 @@ class BaseAnt:
         # привлекательности ребер
         attrs = [self.attraction(v, t) for t in targets]
 
-        total_attr = sum(attrs)
+        total_attr: float = sum(attrs)
 
         # некуда идти
         if total_attr == 0.0:
             log()['ATTR_DEBUG'].log('Total attr is 0, falling back')
             self.fallback_len += 1
-            for i in range(self.fallback_len - self.required_fallback):
+            for _ in range(self.fallback_len - self.required_fallback):
                 self._fall_back()
             self.required_fallback = self.fallback_len
         # есть куда идти
         else:
             attr = [a / total_attr for a in attrs]
             # случайный выбор тут
-            choice = random.choice(len(targets), p=attr)
+            choice: int = random.choice(len(targets), p=attr)
 
             # добавить в путь
             self.pos = targets[choice]
@@ -98,7 +103,7 @@ class BaseAnt:
             else:
                 self.fallback_len = 0
 
-    def deposit_pheromone(self, Q):
+    def deposit_pheromone(self, Q: float):
         """Распространяет феромон по всем пройденным ребрам"""
         if self.complete:
             G = self.g
@@ -110,12 +115,12 @@ class BaseAnt:
             log()['PHI_DEPOSIT'].log('no pheromone.')
 
     # overridable base
-    def clone(self):
-        ret = BaseAnt(self.alpha,
-                    self.beta,
-                    self.g,
-                    self.pos,
-                    self.target)
+    def clone(self) -> BaseAnt[V]:
+        ret: BaseAnt[V] = BaseAnt(self.alpha,
+                                  self.beta,
+                                  self.g,
+                                  self.pos,
+                                  self.target)
 
         ret.path = deepcopy(self.path)
         ret.visited = deepcopy(self.visited)

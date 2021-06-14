@@ -1,5 +1,10 @@
-class PRMRerouteDaemon:
-    def __init__(self, daemon, graph, thresh, prm):
+from .daemon import Daemon
+from graphs.prm.prmgraph import PRMGraph
+from graphs.prm.prm import PRM
+
+
+class PRMRerouteDaemon(Daemon):
+    def __init__(self, daemon: Daemon, graph: PRMGraph, thresh: float, prm: PRM):
         self.daemon = daemon
         self.graph = graph
         self.threshold = thresh
@@ -16,7 +21,7 @@ class PRMRerouteDaemon:
                 self.graph.remove_vertex(v)
                 new_v += 1
 
-        for i in range(new_v):
+        for _ in range(new_v):
             v = self.prm.generate_vertex()
             self.graph.add_vertex(v)
             nearest = self.prm.find_nearest(self.graph, v)

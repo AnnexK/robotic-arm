@@ -1,4 +1,7 @@
-class NullDaemon:
+from .daemon import Daemon
+
+
+class NullDaemon(Daemon):
     def __init__(self):
         pass
 

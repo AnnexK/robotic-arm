@@ -1,10 +1,13 @@
 from math import sqrt
+from .metric import Metric
+from env.robot import Robot, State
 
-class EffectorDisplacementMetric:
-    def __init__(self, robot):
+
+class EffectorDisplacementMetric(Metric):
+    def __init__(self, robot: Robot):
         self.robot = robot
 
-    def __call__(self, A, B):
+    def __call__(self, A: State, B: State) -> float:
         self.robot.state = A
         ea = self.robot.get_effector()
         self.robot.state = B

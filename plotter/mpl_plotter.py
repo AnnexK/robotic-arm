@@ -1,35 +1,30 @@
 import matplotlib.pyplot as plt
-from .plotter import Plotter, Mux
-
-
-class Point:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+from .plotter import Plotter, PlotPoint, PlotterLink
+from typing import Dict, List
 
 
 class MPLPlotter(Plotter):
     num = 0
 
     def __init__(self):
-        self.id = MPLPlotter.num
-        self.point_rows = dict()
+        self.id: int = MPLPlotter.num
+        self.point_rows: Dict[PlotterLink, List[PlotPoint]] = dict()
         MPLPlotter.num += 1
         plt.show(block=False)
 
     def __del__(self):
-        Mux().deregister_plotter(self)
         plt.show()
 
-    def plot_point(self, link):
+    def plot(self, link: PlotterLink):
+        point = link.get_point()
         if link not in self.point_rows:
-            self.point_rows[link] = [Point(link.x, link.y)]
+            self.point_rows[link] = [point]
         else:
-            self.point_rows[link].append(Point(link.x, link.y))
+            self.point_rows[link].append(point)
         f = plt.figure(self.id)
         f.clear()
         for r in self.point_rows:
             points = self.point_rows[r]
             plt.plot([p.x for p in points], [p.y for p in points])
         plt.draw()
-        plt.pause(0.1)
+        plt.pause(1)

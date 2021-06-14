@@ -1,12 +1,28 @@
-from .mux import Mux
-from abc import ABCMeta, abstractmethod
+from __future__ import annotations
+import abc
 
-# Объект-звено от коммутатора до плоттера
-# Коммутатор записывает в него данные с звена от объекта данных
-# и заставляет звено направить оповещение связанному со звеном
-# плоттеру
 
-class Plotter(metaclass=ABCMeta):
-    @abstractmethod
-    def plot_point(self, link):
+class PlotPoint:
+    def __init__(self, x: float, y: float):
+        self.x = x
+        self.y = y
+
+
+class PlotterLink(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def get_point(self) -> PlotPoint:
+        pass
+
+    @abc.abstractmethod
+    def attach(self, P: Plotter):
+        pass
+
+    @abc.abstractmethod
+    def detach(self, P: Plotter):
+        pass
+
+
+class Plotter(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def plot(self, link: PlotterLink):
         pass

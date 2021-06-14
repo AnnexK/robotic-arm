@@ -1,3 +1,6 @@
-class NullPlotter:
-    def plot_point(self, link):
+from .plotter import Plotter, PlotterLink
+
+
+class NullPlotter(Plotter):
+    def plot(self, link: PlotterLink):
         pass

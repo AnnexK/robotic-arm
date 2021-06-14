@@ -13,5 +13,5 @@ log().add_logger('FATAL', stdout)
 # log().add_logger('COLLISION', stdout)
 log().add_logger('STATE', stdout)
 log().add_logger('EAS', stdout)
-
+log().add_logger('PRM', stdout)
 log().log('loggers loaded normally')

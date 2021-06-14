@@ -1,17 +1,21 @@
-from graphs.graph import GridGraph
-from graphs.weight_calcs.robotic import RobotWeight
-from graphs.phi_managers.bounded import BoundedPhiManager as pm
+from graphs.phigraph import PhiGraph
+from graphs.gridgraph import GridGraph
+from graphs.gridgraph.wg_managers.robotic import RobotWeight
+from graphs.gridgraph.phi_managers.bounded import BoundedPhiManager as pm
+from .builder import GraphBuilder
+from graphs.gridgraph.vertex import GGVertex
+from env.robot import Robot
+
 from math import inf
 
 
-class RoboticGraphBuilder:
-    def __init__(self, r, end, base):
+class RoboticGraphBuilder(GraphBuilder[GGVertex]):
+    def __init__(self, r: Robot, base: float):
         self.robot = r
         self.phi = base
-        self.end = end
         self.lower = 1e-8
 
-    def make_graph(self):
+    def build_graph(self) -> PhiGraph[GGVertex]:
         ret = GridGraph(
             RobotWeight(self.robot),
             pm(self.phi, self.lower, inf)

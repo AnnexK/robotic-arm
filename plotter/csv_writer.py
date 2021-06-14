@@ -1,32 +1,20 @@
-from .plotter import Plotter
-from .mux import Mux
+from .plotter import Plotter, PlotterLink
+from typing import Iterable, Dict
 
 
 class CSVWriter(Plotter):
-    min_name = 'min'
-    max_name = 'max'
-    avg_name = 'avg'
-    def __init__(self, filename):
+    def __init__(self, filename: str, links: Iterable[PlotterLink]):
         self.fp = open(filename, 'w')
-        self.wdict = {
-            CSVWriter.min_name: 0.0,
-            CSVWriter.max_name: 0.0,
-            CSVWriter.avg_name: 0.0
-        }
-        self.current = 0
+        self.links: Dict[PlotterLink, bool] = {L: False for L in links}
+        for L in self.links:
+            L.attach(self)
 
     def __del__(self):
-        Mux().deregister_plotter(self)
         self.fp.close()
 
-    def plot_point(self, link):
-        self.wdict[link.name] = link.y
-        self.current += 1
-        if self.current == 3:
-            self.fp.write(
-                f'{self.wdict[CSVWriter.min_name]},'
-                f'{self.wdict[CSVWriter.max_name]},'
-                f'{self.wdict[CSVWriter.avg_name]}\n')
-            self.current = 0
-
-    
+    def plot(self, link: PlotterLink):
+        self.links[link] = True
+        if all(self.links.values()):
+            s = ','.join(str(L.get_point().y) for L in self.links)
+            self.fp.write(s+'\n')
+            self.ready = {L: False for L in self.links}

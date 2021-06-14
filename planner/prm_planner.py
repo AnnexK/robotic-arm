@@ -36,18 +36,23 @@ class ACOPRMPlanner(Planner):
         # PRM build phase
         for i in range(self.prm.n):
             if (i+1) % 100 == 0:
-                log()['PRM'].log(f'Generating vertex {i+1}')
+                log()['PRM'].log(f'Generating vertex {i+1}/{self.prm.n}')
             v = prm.generate_vertex()
             g.add_vertex(v)
+        
         for i, v in enumerate(g.vertices):
             if (i+1) % 100 == 0:
-                log()['PRM'].log(f'Finding nearest for vertex #{i+1}')
+                log()['PRM'].log(f'Finding nearest for vertex {i+1}/{self.prm.n}')
             nearest = prm.find_nearest(g, v)
+            if (i+1) % 100 == 0:
+                log()['PRM'].log(f'found nearest')
             
             if (i+1) % 100 == 0:
-                log()['PRM'].log(f'Connecting nearest for vertex #{i+1}')
+                log()['PRM'].log(f'Connecting nearest for vertex #{i+1}/{self.prm.n}')
             for n in nearest:
                 prm.try_connect(g, v, n)
+            if (i+1) % 100 == 0:
+                log()['PRM'].log('connected')
 
         R.state = vstart
         gen_tries = 0

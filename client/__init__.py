@@ -10,8 +10,6 @@ from planner.prm_planner import ACOPRMPlanner
 from .acoparams import ACOParams, ACOParamsValueError
 from .prmparams import PRMParams, PRMParamsValueError
 
-import pathlib
-
 
 def main():
     """Основная функция программы ACOStock"""
@@ -39,7 +37,7 @@ def main():
         return
 
     log()['MAIN'].log('Loading task...')
-    Env = env.load_task(pathlib.Path(args.task),
+    Env = env.load_task(args.task,
                         render=not args.silent,
                         fallback=args.fallback)
 
@@ -56,7 +54,7 @@ def main():
 
     with open(args.seq, 'w') as fp:
         for s in plan:
-            fp.write(f'{s}\n')
+            fp.write(f'{",".join(str(c) for c in s)}\n')
 
     del Env
     log()['MAIN'].log('Have a nice day')
@@ -95,7 +93,7 @@ def main_prm():
         return
 
     log()['MAIN'].log('Loading task...')
-    Env = env.load_task(pathlib.Path(args.task),
+    Env = env.load_task(args.task,
                         render=not args.silent,
                         fallback=args.fallback)
 
@@ -112,7 +110,7 @@ def main_prm():
 
     with open(args.seq, 'w') as fp:
         for s in plan:
-            fp.write(f'{s}\n')
+            fp.write(f'{",".join(str(c) for c in s)}\n')
         
     del Env
     log()['MAIN'].log('Have a nice day')

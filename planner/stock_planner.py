@@ -5,6 +5,7 @@ import plotter
 from plotter.null import NullPlotter
 from .planner import Planner, Plan
 from env.environment import Environment
+from env.robot import Robot
 
 from client.acoparams import ACOParams
 
@@ -17,7 +18,10 @@ class ACOStockPlanner(Planner):
         self.plot = plot
 
     def plan(self, env: Environment) -> Plan:
-        R = env.robot
+        if env.robot is None:
+            raise Exception('Should not happen')
+        else:
+            R: Robot = env.robot
         ret: Plan = [R.state]
         goal = env.target
 

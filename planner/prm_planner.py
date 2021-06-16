@@ -8,6 +8,7 @@ from graphs.prm import PRM
 from graphs.prm.metrics.euclid import EuclideanMetric
 from planner.planner import Planner, Plan
 from env.environment import Environment
+from env.robot import Robot
 
 
 
@@ -19,7 +20,10 @@ class ACOPRMPlanner(Planner):
         self.plot = plot
 
     def plan(self, env: Environment) -> Plan:
-        R = env.robot
+        if env.robot is None:
+            raise Exception('Should not happen')
+        else:
+            R: Robot = env.robot
         goal = env.target
         vstart = R.state
         if R.check_collisions():

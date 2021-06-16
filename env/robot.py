@@ -9,6 +9,10 @@ from .taskdata import TaskData
 Quaternion = Tuple[float, float, float, float]
 
 
+class RobotStateError(Exception):
+    pass
+
+
 class Robot:
     """Обертка над объектом pybullet, содержащая информацию
 об объекте робота и позволяющая производить операции перемещения
@@ -121,13 +125,12 @@ class Robot:
     @state.setter
     def state(self, val: State):
         if len(val) != len(self._dofs):
-            raise ValueError('Wrong number of DoFs')
+            raise RobotStateError('Wrong number of DoFs')
 
         for lower, v, upper in zip(self._lower, val, self._upper):
             # нет ограничений на значение
             if not (lower <= v <= upper):
-                raise ValueError('Values not in bounds')
-
+                raise RobotStateError('Values not in bounds')
         for i, joint in enumerate(self._dofs):
             pb.resetJointState(self.id, joint, val[i], #type: ignore
                                targetVelocity=0.0,

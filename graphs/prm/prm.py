@@ -55,4 +55,5 @@ class PRM:
             self.robot.state = cur
             if self.robot.check_collisions():
                 return
+            cur = next_config(cur)
         graph.add_edge(v, w, self.metric(v, w), self.phi)

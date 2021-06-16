@@ -1,6 +1,6 @@
 {
-    "urdf_name" : "test-model.urdf",
-    "sdf_name" : "test-env-2.sdf",
+    "urdf_name" : "files/test-model.urdf",
+    "sdf_name" : "files/test-env-2.sdf",
     "pos" : [-0.15, 0.0, 0.0],
     "effector_name" : "effector",
     "dofs" : [1.57, -1, 2.7, 0.7],

@@ -188,7 +188,7 @@ class Robot:
         # задание полученного положения
         try:
             self.state = IK
-        except ValueError:
+        except RobotStateError:
             log()['PYBULLET'].log('unable to set state: vals out of bounds')
             self.state = start_joints
             return False

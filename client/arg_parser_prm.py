@@ -10,10 +10,10 @@ def make_parser():
     # PRM
     ret.add_argument('--kmax',
                      help='Amount of vertices in PRM',
-                     type=int)
+                     type=int, default=1000)
     ret.add_argument('--threshold',
                      help='Pheromone threshold for reroute daemon',
-                     type=float)
+                     type=float, default=1e-6)
     ret.add_argument('--nmax',
                      help='Max amount of neighbours to consider in PRM',
                      type=int, default=15)

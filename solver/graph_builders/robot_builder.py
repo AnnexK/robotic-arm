@@ -1,6 +1,6 @@
 from graphs.phigraph import PhiGraph
 from graphs.gridgraph import GridGraph
-from graphs.gridgraph.wg_managers.robotic import RobotWeight
+from graphs.gridgraph.wg_managers.euclid import EuclidWeightManager as wm
 from graphs.gridgraph.phi_managers.bounded import BoundedPhiManager as pm
 from .builder import GraphBuilder
 from graphs.gridgraph.vertex import GGVertex
@@ -17,7 +17,7 @@ class RoboticGraphBuilder(GraphBuilder[GGVertex]):
 
     def build_graph(self) -> PhiGraph[GGVertex]:
         ret = GridGraph(
-            RobotWeight(self.robot),
+            wm(self.robot),
             pm(self.phi, self.lower, inf)
         )
 

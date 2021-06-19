@@ -53,7 +53,7 @@
     </visual>
     <collision>
       <geometry>
-        <box size="0.1 0.1 1.0"/>
+        <box size="0.1 0.1 1.5"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0.5"/>
     </collision>
@@ -66,16 +66,16 @@
   <link name="link2">
     <visual>
       <geometry>
-        <box size="0.1 0.1 0.75"/>       
+        <box size="0.1 0.1 1.0"/>       
       </geometry>
       <material name="green"/>
-      <origin rpy="0 0 0" xyz="0 0 .375"/>
+      <origin rpy="0 0 0" xyz="0 0 .5"/>
     </visual>
     <collision>
       <geometry>
         <box size="0.1 0.1 0.75"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0 0 .375"/>
+      <origin rpy="0 0 0" xyz="0 0 .5"/>
     </collision>
     <inertial>
       <mass value="0.0"/>
@@ -86,16 +86,16 @@
   <link name="link3">
     <visual>
       <geometry>
-        <box size="0.1 0.1 0.6"/>
+        <box size="0.1 0.1 1.0"/>
       </geometry>
       <material name="red"/>
-      <origin rpy="0 0 0" xyz="0 0 .3"/>
+      <origin rpy="0 0 0" xyz="0 0 .5"/>
     </visual>
     <collision>
       <geometry>
         <box size="0.1 0.1 0.6"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0 0 .3"/>
+      <origin rpy="0 0 0" xyz="0 0 .5"/>
     </collision>
     <inertial>
       <mass value="0.0"/>
@@ -142,21 +142,21 @@
   <joint name="joint2" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 0 1"/>
+    <origin xyz="0 0 1.0"/>
     <limit lower="-0.1" upper="3.14" effort="0" velocity="0"/> 
   </joint>
 
   <joint name="joint3" type="revolute">
     <parent link="link2"/>
     <child link="link3"/>
-    <origin xyz="0 0 0.75"/>
+    <origin xyz="0 0 1"/>
     <limit lower="-0.1" upper="3.14" effort="0" velocity="0"/> 
   </joint>
 
   <joint name="eff_joint" type="fixed">
     <parent link="link3"/>
     <child link="effector"/>
-    <origin xyz="0 0 .65"/>
+    <origin xyz="0 0 1.05"/>
   </joint>
       
 </robot>

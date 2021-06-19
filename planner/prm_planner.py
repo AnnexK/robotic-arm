@@ -5,7 +5,8 @@ from solver import BaseAnt, ElitistAS, AntSolver, NullDaemon, PRMRerouteDaemon
 import plotter
 from graphs.prm import PRMGraph
 from graphs.prm import PRM
-from graphs.prm.metrics.euclid import EuclideanMetric
+
+import graphs.prm.nearest as near
 from planner.planner import Planner, Plan
 from env.environment import Environment
 from env.robot import Robot
@@ -29,10 +30,11 @@ class ACOPRMPlanner(Planner):
         if R.check_collisions():
             raise Exception('Init configuration in obstacle space!')
 
-        g = PRMGraph()
+        g = PRMGraph()        
+        neards = near.KDTree(len(R.state))
         prm = PRM(
             self.prm.k,
-            EuclideanMetric(),
+            neards,
             R,
             self.aco.phi
         )
@@ -43,11 +45,12 @@ class ACOPRMPlanner(Planner):
                 log()['PRM'].log(f'Generating vertex {i+1}/{self.prm.n}')
             v = prm.generate_vertex()
             g.add_vertex(v)
+            neards.insert(v)
         
         for i, v in enumerate(g.vertices):
             if (i+1) % 100 == 0:
                 log()['PRM'].log(f'Finding nearest for vertex {i+1}/{self.prm.n}')
-            nearest = prm.find_nearest(g, v)
+            nearest = prm.find_nearest(v)
             if (i+1) % 100 == 0:
                 log()['PRM'].log(f'found nearest')
             
@@ -74,7 +77,8 @@ class ACOPRMPlanner(Planner):
         # добавить начальную и конечную вершины если их еще не добавило
         try:
             g.add_vertex(vstart)
-            nearest = prm.find_nearest(g, vstart)
+            neards.insert(vstart)
+            nearest = prm.find_nearest(vstart)
             for n in nearest:
                 prm.try_connect(g, vstart, n)
         except ValueError:
@@ -82,7 +86,8 @@ class ACOPRMPlanner(Planner):
 
         try:
             g.add_vertex(vend)
-            nearest = prm.find_nearest(g, vend)
+            neards.insert(vend)
+            nearest = prm.find_nearest(vend)
             for n in nearest:
                 prm.try_connect(g, vend, n)
         except ValueError:
@@ -96,7 +101,7 @@ class ACOPRMPlanner(Planner):
             vend
         )
 
-        reroute = PRMRerouteDaemon(NullDaemon(), g, self.prm.thresh, prm)
+        reroute = PRMRerouteDaemon(NullDaemon(), g, self.prm.thresh, prm, neards)
         alg = ElitistAS(
             g,
             self.aco.q,

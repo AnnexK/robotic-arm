@@ -1,16 +1,15 @@
-from typing import Sequence, Tuple, List
+from typing import Sequence
 from env.types import State
 import numpy.random as random
-from math import inf
-from .metrics import Metric
+from .nearest.nearest import KNearest
 from .prmgraph import PRMGraph
 from env.robot import Robot
 
 
 class PRM:
-    def __init__(self, n: int, metric: Metric, robot: Robot, phi: float):
+    def __init__(self, n: int, near: KNearest, robot: Robot, phi: float):
         self.n = n
-        self.metric = metric
+        self.near = near
         self.robot = robot
         self.rng: random.Generator = random.default_rng()
         self.nsteps = 25
@@ -32,19 +31,8 @@ class PRM:
             if not self.robot.check_collisions():
                 return v
 
-    def find_nearest(self, graph: PRMGraph, v: State) -> Sequence[State]:
-        M = [(m, self.metric(v, m)) for m in graph.vertices if v != m]
-        ret: List[State] = []
-
-        def order(x: Tuple[State, float]):
-            if x[0] in ret:
-                return inf
-            else:
-                return x[1]
-        
-        for _ in range(self.n):
-            ret.append( min( M, key=order )[0] )
-        return ret
+    def find_nearest(self, v: State) -> Sequence[State]:
+        return self.near.nearest(v, self.n)
 
     def try_connect(self, graph: PRMGraph, v: State, w: State):
         diff = tuple( (wc-vc)/self.nsteps for wc, vc in zip(w,v) )
@@ -56,4 +44,4 @@ class PRM:
             if self.robot.check_collisions():
                 return
             cur = next_config(cur)
-        graph.add_edge(v, w, self.metric(v, w), self.phi)
+        graph.add_edge(v, w, self.near.metric()(v, w), self.phi)

@@ -1,0 +1,197 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="scene">
+    <model name="floor">
+      <static>1</static>
+      <link name="floor_world_link"/>
+      <link name="floor_link">
+        <pose>0 0 0 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="floor_visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>1 1</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1 1 1 2.21</ambient>
+          </material>
+        </visual>
+        <collision name="floor_col">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+        </collision>
+      </link>
+      <joint name="floor_base" type="fixed">
+        <parent>floor_world_link</parent>
+        <child>floor_link</child>
+      </joint>
+    </model>
+    <model name="backplate">
+      <static>1</static>
+      <link name="backplate_world_link"/>
+      <link name="backplate_link">
+        <pose>-3 0 0 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="backplate_visual">
+          <geometry>
+            <plane>
+              <normal>1 0 0</normal>
+              <size>1 1</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1 1 1 2.21</ambient>
+          </material>
+        </visual>
+        <collision name="backplate_col">
+          <geometry>
+            <plane>
+              <normal>1 0 0</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+        </collision>
+      </link>
+      <joint name="backplate_base" type="fixed">
+        <parent>backplate_world_link</parent>
+        <child>backplate_link</child>
+      </joint>
+    </model>
+    <model name="lowbox">
+      <static>1</static>
+      <link name="lowbox_world_link"/>
+      <link name="lowbox_link">
+        <pose>0.75 0.0 0.4 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="lowbox_visual">
+          <geometry>
+            <box>
+              <size>0.5 2.5 0.8</size>
+            </box>
+          </geometry>
+        </visual>
+        <collision name="lowbox_col">
+          <geometry>
+            <box>
+              <size>0.5 2.5 0.8</size>
+            </box>
+          </geometry>	  
+        </collision>
+      </link>
+      <joint name="lowbox_base" type="fixed">
+        <parent>lowbox_world_link</parent>
+        <child>lowbox_link</child>
+      </joint>
+    </model>
+    <model name="highbox_left">
+      <static>1</static>
+      <link name="highbox_left_world_link"/>
+      <link name="highbox_left_link">
+        <pose>0.0 1.75 1.0 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="highbox_left_visual">
+          <geometry>
+            <box>
+              <size>1 1 2</size>
+            </box>
+          </geometry>
+        </visual>
+        <collision name="highbox_left_col">
+          <geometry>
+            <box>
+              <size>1 1 2</size>
+            </box>
+          </geometry>	  
+        </collision>
+      </link>
+      <joint name="highbox_left_base" type="fixed">
+        <parent>highbox_left_world_link</parent>
+        <child>highbox_left_link</child>
+      </joint>
+    </model>
+    <model name="highbox_right">
+      <static>1</static>
+      <link name="highbox_right_world_link"/>
+      <link name="highbox_right_link">
+        <pose>0.0 -1.75 1.0 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="highbox_right_visual">
+          <geometry>
+            <box>
+              <size>1 1 2</size>
+            </box>
+          </geometry>
+        </visual>
+        <collision name="highbox_right_col">
+          <geometry>
+            <box>
+              <size>1 1 2</size>
+            </box>
+          </geometry>	  
+        </collision>
+      </link>
+      <joint name="highbox_right_base" type="fixed">
+        <parent>highbox_right_world_link</parent>
+        <child>highbox_right_link</child>
+      </joint>
+    </model>
+    <model name="bar">
+      <static>1</static>
+      <link name="bar_world_link"/>
+      <link name="bar_link">
+        <pose>0.0 0.0 2.1 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="bar_visual">
+          <geometry>
+            <box>
+              <size>0.5 4.5 0.2</size>
+            </box>
+          </geometry>
+        </visual>
+        <collision name="bar_col">
+          <geometry>
+            <box>
+              <size>0.5 4.5 0.2</size>
+            </box>
+          </geometry>	  
+        </collision>
+      </link>
+      <joint name="bar_base" type="fixed">
+        <parent>bar_world_link</parent>
+        <child>bar_link</child>
+      </joint>
+    </model>
+    <model name="target_box">
+      <static>1</static>
+      <link name="target_box_world_link"/>
+      <link name="target_box_link">
+        <pose>2.0 1.75 0.125 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="target_visual">
+          <geometry>
+            <box>
+              <size>1 1 0.5</size>
+            </box>
+          </geometry>
+        </visual>
+        <collision name="target_col">
+          <geometry>
+            <box>
+              <size>1 1 0.25</size>
+            </box>
+          </geometry>
+        </collision>
+      </link>
+      <joint name="target_base" type="fixed">
+        <parent>target_box_world_link</parent>
+        <child>target_box_link</child>
+      </joint>
+    </model>
+  </world>
+</sdf>

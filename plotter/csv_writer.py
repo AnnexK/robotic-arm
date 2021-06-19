@@ -17,4 +17,4 @@ class CSVWriter(Plotter):
         if all(self.links.values()):
             s = ','.join(str(L.get_point().y) for L in self.links)
             self.fp.write(s+'\n')
-            self.ready = {L: False for L in self.links}
+            self.links = {L: False for L in self.links}

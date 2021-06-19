@@ -8,13 +8,13 @@ def make_parser():
     ret.add_argument('csv', help='csv stats filename')
     ret.add_argument('seq', help='q sequence filename')
     # PRM
-    ret.add_argument('--kmax',
+    ret.add_argument('--nmax',
                      help='Amount of vertices in PRM',
                      type=int, default=1000)
     ret.add_argument('--threshold',
                      help='Pheromone threshold for reroute daemon',
                      type=float, default=1e-6)
-    ret.add_argument('--nmax',
+    ret.add_argument('--kmax',
                      help='Max amount of neighbours to consider in PRM',
                      type=int, default=15)
     # ACO

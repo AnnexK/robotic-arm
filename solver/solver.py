@@ -29,13 +29,20 @@ class AntSolver(Generic[V], Plottable):
     def solve(self, iters: int, ants_n: int):
         i: int = 1
         repeats: int = 0
+        fails: int = 0
         try:
             while i <= iters:
                 ants = [self.p_ant.clone() for _ in range(ants_n)]
                 log()['SOLVER'].log(f'Iter {i}')
                 self.S.generate_solutions(ants)
+                self.S.update_pheromone(ants)
+                self.S.daemon_actions()
                 if not any(a.complete for a in ants):
                     log()['SOLVER'].log(f'No results on iter {i}, restarting')
+                    fails += 1
+                    if fails == 10:
+                        log()['SOLVER'].log(f'Too many fails in a row, wrapping up')
+                        i = iters
                 else:
                     prev_avg = self.avg_iter.y
                     self.min_iter.set_point(float(i), min(self.min_iter.y, min(a.path_len for a in ants)))
@@ -45,8 +52,7 @@ class AntSolver(Generic[V], Plottable):
                     self.max_iter.announce()
                     self.avg_iter.announce()
 
-                    self.S.update_pheromone(ants)
-                    self.S.daemon_actions()
+                    
                     if i > 1 and self.avg_iter.y == prev_avg:
                         log()['SOLVER'].log(f'Same avg, times: {repeats+1}')
                         repeats = repeats + 1

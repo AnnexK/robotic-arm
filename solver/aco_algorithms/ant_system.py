@@ -41,6 +41,7 @@ class AntSystem(ACOAlgorithm[V]):
                 length = a.path_len
                 log()['ANT'].log('Ant #{} finished'.format(i+1))
                 log()['ANT'].log('Path length: {}'.format(length))
+                log()['ANT'].log(f'Vtx in path = {len(a.path)}')
                 if length < self.best_length:
                     self.best_length = length
                     self.best_solution = deepcopy(a.path)

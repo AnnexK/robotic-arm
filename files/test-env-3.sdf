@@ -167,11 +167,37 @@
         <child>bar_link</child>
       </joint>
     </model>
+    <model name="source_box">
+      <static>1</static>
+      <link name="source_box_world_link"/>
+      <link name="source_box_link">
+        <pose>-1.2 2.00 0.125 0 0 0</pose>
+        <gravity>0</gravity>
+        <visual name="source_visual">
+          <geometry>
+            <box>
+              <size>1 1 0.5</size>
+            </box>
+          </geometry>
+        </visual>
+        <collision name="source_col">
+          <geometry>
+            <box>
+              <size>1 1 0.25</size>
+            </box>
+          </geometry>
+        </collision>
+      </link>
+      <joint name="source_base" type="fixed">
+        <parent>source_box_world_link</parent>
+        <child>source_box_link</child>
+      </joint>
+    </model>
     <model name="target_box">
       <static>1</static>
       <link name="target_box_world_link"/>
       <link name="target_box_link">
-        <pose>2.0 1.75 0.125 0 0 0</pose>
+        <pose>1.2 2.00 0.125 0 0 0</pose>
         <gravity>0</gravity>
         <visual name="target_visual">
           <geometry>

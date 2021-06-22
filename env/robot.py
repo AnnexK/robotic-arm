@@ -1,15 +1,30 @@
 import pybullet as pb
-from math import inf, isclose
+from math import inf, isclose, pi
 from logger import log
 from typing import List, Tuple, Optional, Set, Any, Callable
 from .types import State, Vector3
 from .taskdata import TaskData
+import enum
+
+
+class JointType(enum.Enum):
+    def __repr__(self) -> str:
+        return f'<JOINT_{self.name}>'
+
+    REVOLUTE = enum.auto()
+    PRISMATIC = enum.auto()
+    CONTNIUOUS = enum.auto()
+
 
 
 Quaternion = Tuple[float, float, float, float]
 
 
 class RobotStateError(Exception):
+    pass
+
+
+class JointTypeError(Exception):
     pass
 
 
@@ -35,21 +50,30 @@ class Robot:
                 ret.append(i)
         return ret
 
-    def _get_limits(self) -> Tuple[List[float], List[float]]:
+    def _get_limits(self) -> Tuple[List[float], List[float], List[JointType]]:
         lower: List[float] = []
         upper: List[float] = []
+        types: List[JointType] = []
         for i in range(pb.getNumJoints(self.id, #type: ignore
                                        physicsClientId=self.s)):
             joint: Any = pb.getJointInfo(self.id, i, #type: ignore
                                          physicsClientId=self.s)
-            if joint[2] != pb.JOINT_FIXED: #type: ignore
-                if joint[8] > joint[9]:
-                    lower.append(-inf)
-                    upper.append(inf)
+            if joint[2] == pb.JOINT_FIXED: #type: ignore
+                continue
+
+            if joint[8] > joint[9]:
+                if joint[2] == pb.JOINT_PRISMATIC: #type: ignore
+                    raise JointTypeError('Joint limits must be specified for prismatic joints!')
                 else:
-                    lower.append(joint[8])  # нижний предел
-                    upper.append(joint[9])  # верхний предел
-        return (lower, upper)
+                    lower.append(0.0) #type: ignore
+                    upper.append(2*pi) #type: ignore
+                    types.append(JointType.CONTNIUOUS)
+            else:
+                lower.append(joint[8])  # нижний предел
+                upper.append(joint[9])  # верхний предел
+                types.append(JointType.REVOLUTE if joint[2] == pb.JOINT_REVOLUTE else JointType.PRISMATIC) # type: ignore
+                    
+        return (lower, upper, types)
 
     def __init__(self, server: int, td: TaskData):
         # читаем urdf файл
@@ -85,7 +109,7 @@ class Robot:
 
         # получаем список индексов звеньев со степенями свободы
         self._dofs = self._get_dof_ids()
-        self._lower, self._upper = self._get_limits()
+        self._lower, self._upper, self._types = self._get_limits()
         self.ranges = [u - l for u, l in zip(self._upper, self._lower)]
         self._damping = [0.01 for _ in self._dofs]
 
@@ -145,6 +169,10 @@ class Robot:
     def upper(self) -> List[float]:
         return self._upper
 
+    @property
+    def types(self) -> List[JointType]:
+        return self._types
+    
     def move_to(self, pos: Vector3, orn: Optional[Vector3] = None):
         """Перемещает схват робота в pos с ориентацией orn
 Возвращает true, если перемещение удалось

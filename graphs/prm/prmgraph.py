@@ -29,13 +29,15 @@ class PRMGraph(PhiGraph[V]):
         try:
             del self._vertices[v]
             for w in self.vertices:
-                self._vertices[w] = {x: e for x, e in self._vertices[w].items() if x != v}
+                del self._vertices[w][v]
         except KeyError:
             pass
 
     def add_edge(self, v: V, w: V, wg: float, phi: float):
-        if not (v in self._vertices and w in self._vertices):
-            raise ValueError('One of vertices not in graph')
+        if v not in self._vertices:
+            raise ValueError('v not in graph')
+        if w not in self._vertices:
+            raise ValueError(f'w not in graph: {w}')
 
         edge = PRMGraph.GraphEdge(wg, phi)
         self._vertices[v][w] = edge

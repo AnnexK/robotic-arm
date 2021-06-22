@@ -5,7 +5,7 @@ from solver import BaseAnt, ElitistAS, AntSolver, NullDaemon, PRMRerouteDaemon
 import plotter
 from graphs.prm import PRMGraph
 from graphs.prm import PRM
-
+from graphs.prm.metrics import EuclideanMetric
 import graphs.prm.nearest as near
 from planner.planner import Planner, Plan
 from env.environment import Environment
@@ -30,8 +30,10 @@ class ACOPRMPlanner(Planner):
         if R.check_collisions():
             raise Exception('Init configuration in obstacle space!')
 
+        M = EuclideanMetric(env.robot)
         g = PRMGraph()        
-        neards = near.KDTree(len(R.state))
+        # neards = near.KDTree(len(R.state))
+        neards = near.BruteforceNearest(M)
         prm = PRM(
             self.prm.k,
             neards,

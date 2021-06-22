@@ -45,9 +45,9 @@ class AntSolver(Generic[V], Plottable):
                         i = iters
                 else:
                     prev_avg = self.avg_iter.y
-                    self.min_iter.set_point(float(i), min(self.min_iter.y, min(a.path_len for a in ants)))
-                    self.max_iter.set_point(float(i), max(a.path_len for a in ants))
-                    self.avg_iter.set_point(float(i), sum(a.path_len for a in ants) / len(ants))
+                    self.min_iter.set_point(float(i), min(self.min_iter.y, min(a.path_len for a in ants if a.complete)))
+                    self.max_iter.set_point(float(i), max(a.path_len for a in ants if a.complete))
+                    self.avg_iter.set_point(float(i), sum(a.path_len for a in ants if a.complete) / len(ants))
                     self.min_iter.announce()
                     self.max_iter.announce()
                     self.avg_iter.announce()

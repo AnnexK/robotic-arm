@@ -3,7 +3,6 @@ from .nearest import KNearest
 from math import inf
 from typing import List, Optional, Sequence, Tuple
 from env.types import State
-from graphs.prm.metrics.euclid import EuclideanMetric
 from util.quickselect import quickselect
 import heapq as heap
 
@@ -17,10 +16,10 @@ class KDTree(KNearest):
             self.right: Optional[KDTree.KDNode] = None
     Node = Optional[KDNode]
 
-    def __init__(self, dim: int, states: List[State] = []):
+    def __init__(self, dim: int, metric: Metric, states: List[State] = []):
         self.dim = dim
         self.inf = tuple(inf for _ in range(dim))
-        self._metric = EuclideanMetric()
+        self._metric = metric
         self.root: KDTree.Node = self._init_tree(states, 0)
 
     def _init_tree(self, states: List[State], cdim: int) -> Node:
@@ -77,6 +76,7 @@ class KDTree(KNearest):
                 elif node.left is not None:
                     node.val = self._find_min(node.left, cd, ncd)
                     node.right = self._delete(node.left, node.val, ncd)
+                    node.left = None
                 else:
                     node = None
             elif val[cd] < node.val[cd]:
@@ -85,6 +85,12 @@ class KDTree(KNearest):
                 node.right = self._delete(node.right, val, ncd)
         return node
 
+    def __len__(self) -> int:
+        return self._size(self.root)
+
+    def _size(self, node: Node) -> int:
+        return self._size(node.left) + self._size(node.right) + 1 if node else 0
+    
     def _find_min(self, node: Node, dim: int, cd: int) -> State:
         if node is None:
             return self.inf
@@ -96,11 +102,18 @@ class KDTree(KNearest):
             else:
                 return self._find_min(node.left, dim, ncd)
         else:
-            return min(
-                self._find_min(node.left, dim, ncd),
-                self._find_min(node.right, dim, ncd),
-                node.val
-            )
+            left = self._find_min(node.left, dim, ncd)
+            right = self._find_min(node.right, dim, ncd)
+            if left[dim] < node.val[dim]:
+                if right[dim] < left[dim]:
+                    return right
+                else:
+                    return left
+            else:
+                if right[dim] < node.val[dim]:
+                    return right
+                else:
+                    return node.val
 
     Heap = List[Tuple[float, State]]
     def nearest(self, p: State, k: int) -> Sequence[State]:

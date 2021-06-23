@@ -32,8 +32,8 @@ class ACOPRMPlanner(Planner):
 
         M = EuclideanMetric(env.robot)
         g = PRMGraph()        
-        # neards = near.KDTree(len(R.state))
-        neards = near.BruteforceNearest(M)
+        neards = near.KDTree(len(R.state), M)
+        # neards = near.BruteforceNearest(M)
         prm = PRM(
             self.prm.k,
             neards,
@@ -48,7 +48,7 @@ class ACOPRMPlanner(Planner):
             v = prm.generate_vertex()
             g.add_vertex(v)
             neards.insert(v)
-        
+        log()['PRM'].log(f'Vtx in near ds = {len(neards)}')
         for i, v in enumerate(g.vertices):
             if (i+1) % 100 == 0:
                 log()['PRM'].log(f'Finding nearest for vertex {i+1}/{self.prm.n}')

@@ -20,3 +20,7 @@ class KNearest(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def nearest(self, p: State, k: int) -> Sequence[State]:
         pass
+
+    @abc.abstractmethod
+    def __len__(self) -> int:
+        pass

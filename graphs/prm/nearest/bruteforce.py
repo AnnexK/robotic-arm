@@ -26,3 +26,6 @@ class BruteforceNearest(KNearest):
         ret = list((s, self._metric(p, s)) for s in self.states if s != p)
         quickselect(ret, k, self._less)
         return [r[0] for r in ret[:k]]
+
+    def __len__(self) -> int:
+        return len(self.states)

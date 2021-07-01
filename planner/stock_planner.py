@@ -71,7 +71,7 @@ class ACOStockPlanner(Planner):
         for L in S.get_links():
             L.attach(P)
         
-        path = S.solve(self.aco.m, self.aco.i)
+        path = S.solve(self.aco.i, self.aco.m)
 
         for v in path[1:]:
 

@@ -129,8 +129,7 @@ class KDTree(KNearest):
             ncd = (cd+1) % self.dim
             # пробуем разместить вершину в куче
             # а затем вытолкнуть наибольшую из кучи
-            if node.val != p:
-                heap.heappushpop(h, (-self._metric(p, node.val), node.val))
+            heap.heappushpop(h, (-self._metric(p, node.val), node.val))
             # длина перпендикуляра к плоскости
             cddiff = p[cd] - node.val[cd]
             # если длина отрицательная то искать сначала в левом (типа целевая точка находится слева

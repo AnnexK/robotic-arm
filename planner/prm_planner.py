@@ -59,7 +59,8 @@ class ACOPRMPlanner(Planner):
             if (i+1) % 100 == 0:
                 log()['PRM'].log(f'Connecting nearest for vertex #{i+1}/{self.prm.n}')
             for n in nearest:
-                prm.try_connect(g, v, n)
+                if v != n:
+                    prm.try_connect(g, v, n)
             if (i+1) % 100 == 0:
                 log()['PRM'].log('connected')
 

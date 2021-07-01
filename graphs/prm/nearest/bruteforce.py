@@ -23,7 +23,7 @@ class BruteforceNearest(KNearest):
         return self._metric
     
     def nearest(self, p: State, k: int) -> Sequence[State]:
-        ret = list((s, self._metric(p, s)) for s in self.states if s != p)
+        ret = list((s, self._metric(p, s)) for s in self.states)
         quickselect(ret, k, self._less)
         return [r[0] for r in ret[:k]]
 

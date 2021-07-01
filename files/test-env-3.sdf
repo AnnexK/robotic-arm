@@ -14,9 +14,6 @@
               <size>1 1</size>
             </plane>
           </geometry>
-          <material>
-            <ambient>1 1 1 2.21</ambient>
-          </material>
         </visual>
         <collision name="floor_col">
           <geometry>
@@ -45,9 +42,6 @@
               <size>1 1</size>
             </plane>
           </geometry>
-          <material>
-            <ambient>1 1 1 2.21</ambient>
-          </material>
         </visual>
         <collision name="backplate_col">
           <geometry>
@@ -75,6 +69,12 @@
               <size>0.5 2.5 0.8</size>
             </box>
           </geometry>
+          <material>
+            <ambient>0.6 0.6 0.6 1</ambient>
+            <diffuse>0.6 0.6 0.6 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0 0 0 0</emissive>
+          </material>
         </visual>
         <collision name="lowbox_col">
           <geometry>
@@ -101,6 +101,12 @@
               <size>1 1 2</size>
             </box>
           </geometry>
+          <material>
+            <ambient>0.6 0.6 0.6 1</ambient>
+            <diffuse>0.6 0.6 0.6 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0 0 0 0</emissive>
+          </material>
         </visual>
         <collision name="highbox_left_col">
           <geometry>
@@ -127,6 +133,12 @@
               <size>1 1 2</size>
             </box>
           </geometry>
+          <material>
+            <ambient>0.6 0.6 0.6 1</ambient>
+            <diffuse>0.6 0.6 0.6 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0 0 0 0</emissive>
+          </material>
         </visual>
         <collision name="highbox_right_col">
           <geometry>
@@ -153,6 +165,12 @@
               <size>0.5 4.5 0.2</size>
             </box>
           </geometry>
+          <material>
+            <ambient>0.6 0.6 0.6 1</ambient>
+            <diffuse>0.6 0.6 0.6 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0 0 0 0</emissive>
+          </material>
         </visual>
         <collision name="bar_col">
           <geometry>
@@ -179,6 +197,12 @@
               <size>1 1 0.5</size>
             </box>
           </geometry>
+          <material>
+            <ambient>0 0.7 0 1</ambient>
+            <diffuse>0 0.7 0 1</diffuse>
+            <specular>0.1 0.0 0.1 1</specular>
+            <emissive>0 0 0 0</emissive>
+          </material>
         </visual>
         <collision name="source_col">
           <geometry>
@@ -205,6 +229,12 @@
               <size>1 1 0.5</size>
             </box>
           </geometry>
+          <material>
+            <ambient>0 0.7 0 1</ambient>
+            <diffuse>0 0.7 0 1</diffuse>
+            <specular>0.1 0.0 0.1 1</specular>
+            <emissive>0 0 0 0</emissive>
+          </material>
         </visual>
         <collision name="target_col">
           <geometry>

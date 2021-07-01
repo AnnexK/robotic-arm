@@ -27,9 +27,9 @@ class PRMGraph(PhiGraph[V]):
     
     def remove_vertex(self, v: V):
         try:
-            del self._vertices[v]
-            for w in self.vertices:
+            for w in self.get_adjacent(v):
                 del self._vertices[w][v]
+            del self._vertices[v]            
         except KeyError:
             pass
 
@@ -48,8 +48,11 @@ class PRMGraph(PhiGraph[V]):
         if not (v in self._vertices and w in self._vertices):
             raise ValueError('One of vertices not in graph')
         
-        del self._vertices[v][w]
-        del self._vertices[w][v]
+        try:
+            del self._vertices[v][w]
+            del self._vertices[w][v]
+        except KeyError:
+            pass
 
     def get_adjacent(self, v: V) -> Iterable[V]:
         if v not in self._vertices:

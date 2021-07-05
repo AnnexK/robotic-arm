@@ -17,7 +17,7 @@ class PRMParams:
         if val < 1:
             raise PRMParamsValueError('kmax not in bounds')
         if val > self._n:
-            raise PRMParamsValueError('kmax is less than nmax')
+            raise PRMParamsValueError('nmax is less than kmax')
         self._k = val
 
     @property

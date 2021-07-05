@@ -4,8 +4,8 @@ class PRMParamsValueError(Exception):
 
 class PRMParams:
     def __init__(self):
-        self._k: int = 15
-        self._n: int = 1000
+        self._k: int = 1
+        self._n: int = 1
         self._thresh: float = 1e-8
 
     @property
@@ -15,7 +15,9 @@ class PRMParams:
     @k.setter
     def k(self, val: int):
         if val < 1:
-            raise PRMParamsValueError('k not in bounds')
+            raise PRMParamsValueError('kmax not in bounds')
+        if val > self._n:
+            raise PRMParamsValueError('kmax is less than nmax')
         self._k = val
 
     @property
@@ -25,7 +27,9 @@ class PRMParams:
     @n.setter
     def n(self, val: int):
         if val < 1:
-            raise PRMParamsValueError('n not in bounds')
+            raise PRMParamsValueError('nmax not in bounds')
+        if val < self._k:
+            raise PRMParamsValueError('nmax is less than kmax')
         self._n = val
 
     @property
@@ -35,5 +39,5 @@ class PRMParams:
     @thresh.setter
     def thresh(self, val: float):
         if val < 0.0:
-            raise PRMParamsValueError('thresh not in bounds')
+            raise PRMParamsValueError('threshold not in bounds')
         self._thresh = val

@@ -104,7 +104,7 @@ class ACOPRMPlanner(Planner):
             vend
         )
 
-        reroute = PRMRerouteDaemon(NullDaemon(), g, self.prm.thresh, prm, neards)
+        reroute = PRMRerouteDaemon(NullDaemon(), g, self.prm.thresh, prm, neards, vstart, vend)
         alg = ElitistAS(
             g,
             self.aco.q,

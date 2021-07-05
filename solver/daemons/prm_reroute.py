@@ -1,3 +1,4 @@
+from env.types import State
 from graphs.prm.nearest.nearest import KNearest
 from .daemon import Daemon
 from graphs.prm.prmgraph import PRMGraph
@@ -5,12 +6,14 @@ from graphs.prm.prm import PRM
 from logger import log
 
 class PRMRerouteDaemon(Daemon):
-    def __init__(self, daemon: Daemon, graph: PRMGraph, thresh: float, prm: PRM, near: KNearest):
+    def __init__(self, daemon: Daemon, graph: PRMGraph, thresh: float, prm: PRM, near: KNearest, init: State, goal: State):
         self.daemon = daemon
         self.graph = graph
         self.threshold = thresh
         self.prm = prm
         self.near = near
+        self.init = init
+        self.goal = goal
 
     def daemon_actions(self):
         for v in self.graph.vertices:
@@ -20,7 +23,7 @@ class PRMRerouteDaemon(Daemon):
         new_v = 0
         
         for v in self.graph.vertices:
-            if not self.graph.get_adjacent(v):
+            if not self.graph.get_adjacent(v) and v != self.init and v != self.goal:
                 self.graph.remove_vertex(v)
                 self.near.delete(v)
                 new_v += 1

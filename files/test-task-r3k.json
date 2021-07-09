@@ -1,0 +1,10 @@
+{
+    "urdf_name" : "files/test-model-kurz.urdf",
+    "sdf_name" : "files/test-env-3.sdf",
+    "pos" : [-0.15, 0.0, 0.0],
+    "effector_name" : "effector",
+    "dofs" : [3.625, 0.957, 0.607, 1.017],
+    "eps" : 1e-1,
+    "endpoint" : [1.2, 2.00, 0.5],
+    "emp_best" : 25.24
+}

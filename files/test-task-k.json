@@ -1,5 +1,5 @@
 {
-    "urdf_name" : "files/test-model.urdf",
+    "urdf_name" : "files/test-model-kurz.urdf",
     "sdf_name" : "files/test-env.sdf",
     "pos" : [-0.15, 0.0, 0.0],
     "effector_name" : "effector",

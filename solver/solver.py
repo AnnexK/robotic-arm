@@ -30,6 +30,8 @@ class AntSolver(Generic[V], Plottable):
         i: int = 1
         repeats: int = 0
         fails: int = 0
+        min_avg: float = inf
+        avg_repeats: int = 25
         try:
             while i <= iters:
                 ants = [self.p_ant.clone() for _ in range(ants_n)]
@@ -44,7 +46,6 @@ class AntSolver(Generic[V], Plottable):
                         log()['SOLVER'].log(f'Too many fails in a row, wrapping up')
                         i = iters
                 else:
-                    prev_avg = self.avg_iter.y
                     self.min_iter.set_point(float(i), min(self.min_iter.y, min(a.path_len for a in ants if a.complete)))
                     self.max_iter.set_point(float(i), max(a.path_len for a in ants if a.complete))
                     self.avg_iter.set_point(float(i), sum(a.path_len for a in ants if a.complete) / len(ants))
@@ -53,15 +54,16 @@ class AntSolver(Generic[V], Plottable):
                     self.avg_iter.announce()
 
                     
-                    if i > 1 and self.avg_iter.y == prev_avg:
-                        log()['SOLVER'].log(f'Same avg, times: {repeats+1}')
+                    if self.avg_iter.y >= min_avg:
+                        log()['SOLVER'].log(f'No improvement on average, times: {repeats+1}')
                         repeats = repeats + 1
-                        if repeats == 10:
+                        if repeats == avg_repeats:
                             log()['SOLVER'].log(f'Too many repeats, wrapping up')
                             i = iters
                     else:
                         repeats = 0
                     i = i + 1
+                    min_avg = min(min_avg, self.avg_iter.y)
         except Exception as _:
             traceback.print_exc()
             log()['SOLVER'].log('Something bad happened, saving results...')

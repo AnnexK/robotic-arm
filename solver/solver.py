@@ -4,7 +4,8 @@ from plotter.plottable import Plottable, Link
 from math import inf
 from .aco_algorithms import ACOAlgorithm
 from .ants import BaseAnt
-from typing import Generic, Iterable, TypeVar
+from typing import Generic, Iterable, TypeVar, Deque
+from collections import deque
 
 
 import traceback
@@ -12,6 +13,15 @@ import traceback
 
 V = TypeVar('V')
 
+
+class AvgCalculator:
+    def __init__(self, d: int):
+        self.sample: Deque[float] = deque(maxlen=d)
+
+    def recalculate(self, val: float) -> float:
+        self.sample.append(val)
+        return sum(self.sample) / len(self.sample)
+    
 
 class AntSolver(Generic[V], Plottable):
     """Класс, моделирующий решение задачи"""
@@ -30,8 +40,8 @@ class AntSolver(Generic[V], Plottable):
         i: int = 1
         repeats: int = 0
         fails: int = 0
-        min_avg: float = inf
-        avg_repeats: int = 25
+        max_repeats: int = 25
+        avg = AvgCalculator(max_repeats)
         try:
             while i <= iters:
                 ants = [self.p_ant.clone() for _ in range(ants_n)]
@@ -39,7 +49,13 @@ class AntSolver(Generic[V], Plottable):
                 self.S.generate_solutions(ants)
                 self.S.update_pheromone(ants)
                 self.S.daemon_actions()
-                if not any(a.complete for a in ants):
+
+                ncompleted = 0
+                for a in ants:
+                    if a.complete:
+                        ncompleted += 1
+                
+                if ncompleted == 0:
                     log()['SOLVER'].log(f'No results on iter {i}, restarting')
                     fails += 1
                     if fails == 10:
@@ -48,22 +64,23 @@ class AntSolver(Generic[V], Plottable):
                 else:
                     self.min_iter.set_point(float(i), min(self.min_iter.y, min(a.path_len for a in ants if a.complete)))
                     self.max_iter.set_point(float(i), max(a.path_len for a in ants if a.complete))
-                    self.avg_iter.set_point(float(i), sum(a.path_len for a in ants if a.complete) / len(ants))
+                    self.avg_iter.set_point(float(i), sum(a.path_len for a in ants if a.complete) / ncompleted)
                     self.min_iter.announce()
                     self.max_iter.announce()
                     self.avg_iter.announce()
 
-                    
-                    if self.avg_iter.y >= min_avg:
+                    it_avg = self.avg_iter.y
+                    avg_avg = avg.recalculate(it_avg)
+                    if abs(it_avg-avg_avg)/avg_avg < 0.01:
                         log()['SOLVER'].log(f'No improvement on average, times: {repeats+1}')
                         repeats = repeats + 1
-                        if repeats == avg_repeats:
+                        if repeats == max_repeats:
                             log()['SOLVER'].log(f'Too many repeats, wrapping up')
                             i = iters
                     else:
                         repeats = 0
                     i = i + 1
-                    min_avg = min(min_avg, self.avg_iter.y)
+
         except Exception as _:
             traceback.print_exc()
             log()['SOLVER'].log('Something bad happened, saving results...')

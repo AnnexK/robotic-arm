@@ -51,7 +51,7 @@ filename -- имя SDF-файла (абсолютный путь)
                 raise ValueError('failed to read SDF file')
 
         self.endpoint_obj = self.set_endpoint(td.target_pos)
-        self.endpoint: Vector3 = td.target_pos
+        self.endpoint = td.target_pos
         self._robot = Robot(self.s, td)
     
     def set_endpoint(self, p: Vector3) -> int:

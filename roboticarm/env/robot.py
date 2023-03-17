@@ -16,7 +16,6 @@ class JointType(enum.Enum):
     CONTNIUOUS = enum.auto()
 
 
-
 Quaternion = Tuple[float, float, float, float]
 
 

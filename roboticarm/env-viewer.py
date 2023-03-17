@@ -11,8 +11,8 @@ def main():
     sdffile = str(path.Path(args.sdf).resolve())
     print(sdffile)
 
-    pb.connect(pb.GUI) # type: ignore
-    pb.loadSDF(sdffile) # type: ignore
+    pb.connect(pb.GUI)  # type: ignore
+    pb.loadSDF(sdffile)  # type: ignore
 
     input()
 

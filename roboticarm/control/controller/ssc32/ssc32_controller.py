@@ -11,14 +11,6 @@ class CommandSendError(Exception):
         return "Could not send a command"
 
 
-class UnsupportedChannel(Exception):
-    def __init__(self, ch: int):
-        self._ch = ch
-
-    def __str__(self) -> str:
-        return f"Unsupported channel nr. {self._ch}"
-
-
 class ServoMoveCommand(BaseModel):
     """
     Команда на перемещение одного сервопривода.

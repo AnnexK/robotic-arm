@@ -142,16 +142,17 @@ class SSC32Controller:
         return response == b'+'
 
     def query_pulse_width(self, command: QueryPulseWidthCommand) -> int:
-        self._send_command(str(command))
         """
         Послать запрос заданной ширины импульса для одного сервопривода.
 
         :param command: Команда.
         :return: Ширина импульса.
         """
+        cmd = str(command)
+        self._send_command(cmd)
         # Would be nice to be async
         time.sleep(0.005)
-        return self._read_pw_query(len(command))[0]
+        return self._read_pw_query(1)[0]
 
     def query_pulse_width_group(
             self,

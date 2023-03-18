@@ -68,6 +68,8 @@ class SSC32Controller:
     :param writer: Писатель.
     """
 
+    CHANNEL_AMOUNT = 32
+    
     def __init__(self, reader: Reader, writer: Writer):
         self._reader = reader
         self._writer = writer
@@ -82,6 +84,17 @@ class SSC32Controller:
         if self._writer.write(command.encode(encoding='ascii')) < len(command):
             raise CommandSendError
 
+    def set_initial_state(self):
+        """
+        Задать начальное положение по всем каналам для инициализации контроллера.
+        """
+
+        commands = [
+            ServoMoveCommand(channel=i, pulse_width=1500)
+            for i in range(self.CHANNEL_AMOUNT)
+        ]
+        self.servo_move_group(commands)
+    
     def servo_move(self, command: ServoMoveCommand):
         """
         Послать команду перемещения на один сервопривод.

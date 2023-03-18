@@ -184,4 +184,4 @@ class SSC32Controller:
         """
 
         response = self._reader.read(command_number)
-        return [int(w) for w in response]
+        return [int(w)*10 for w in response]

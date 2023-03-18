@@ -56,7 +56,7 @@ class QueryPulseWidthCommand(BaseModel):
     channel: int = Field(ge=0, lt=32)
 
     def __str__(self) -> str:
-        return f"#{self.channel}QP"
+        return f"QP{self.channel}"
 
 
 class SSC32Controller:

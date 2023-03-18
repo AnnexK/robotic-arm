@@ -4,6 +4,9 @@ from roboticarm.control.communication import Reader, Writer
 
 
 class CommandSendError(Exception):
+    """
+    Исключение, возникающее при ошибке при отправке команды.
+    """    
     def __str__(self) -> str:
         return "Could not send a command"
 
@@ -39,6 +42,12 @@ class ServoMoveCommand(BaseModel):
 
 
 class PulseOffsetCommand(BaseModel):
+    """
+    Команда на задание смещения центра ширины импульса.
+
+    :param channel: Канал контроллера.
+    :param pulse_offset: Ширина смещения.
+    """
     channel: int = Field(ge=0, lt=32)
     pulse_offset: int = Field(ge=-100, le=100)
 
@@ -47,6 +56,11 @@ class PulseOffsetCommand(BaseModel):
 
 
 class QueryPulseWidthCommand(BaseModel):
+    """
+    Команда на получение заданной ширины импульса на канале.
+
+    :param channel: Канал контроллера.
+    """
     channel: int = Field(ge=0, lt=32)
 
     def __str__(self) -> str:
@@ -67,6 +81,11 @@ class SSC32Controller:
         self._writer = writer
 
     def _send_command(self, command: str):
+        """
+        Отправить команду в порт.
+
+        :param command: Строковое представление команды.
+        """
         command += "\r"
         if self._writer.write(command.encode(encoding='ascii')) < len(command):
             raise CommandSendError
@@ -75,16 +94,17 @@ class SSC32Controller:
         """
         Послать команду перемещения на один сервопривод.
 
-        :param ch: Канал сервопривода.
-        :param pw: Ширина импульса для сервопривода (мкс).
-        Задает требуемое состояние.
-        :param time: Время на перемещение из текущего состояния в требуемое.
-        :param speed: Скорость изменения состояния (мкс/сек).
+        :param command: Команда.
         """
 
         self._send_command(str(command))
 
     def servo_move_group(self, commands: list[ServoMoveCommand]):
+        """
+        Послать команду перемещения на несколько сервоприводов.
+
+        :param commands: Набор объединяемых команд.
+        """
         distinct_chans = {cmd.channel for cmd in commands}
         commands_are_distinct = len(distinct_chans) == len(commands)
 
@@ -95,9 +115,19 @@ class SSC32Controller:
         self._send_command(command)
 
     def pulse_offset(self, command: PulseOffsetCommand):
+        """
+        Послать команду задания смещения импульса на один сервопривод.
+
+        :param command: Команда.
+        """
         self._send_command(str(command))
 
     def pulse_offset_group(self, commands: list[PulseOffsetCommand]):
+        """
+        Послать команду задания смещения на несколько сервоприводов.
+
+        :param commands: Набор объединяемых команд.
+        """
         distinct_chans = {cmd.channel for cmd in commands}
         commands_are_distinct = len(distinct_chans) == len(commands)
 
@@ -121,6 +151,12 @@ class SSC32Controller:
 
     def query_pulse_width(self, command: QueryPulseWidthCommand) -> int:
         self._send_command(str(command))
+        """
+        Послать запрос заданной ширины импульса для одного сервопривода.
+
+        :param command: Команда.
+        :return: Ширина импульса.
+        """
         # Would be nice to be async
         time.sleep(0.005)
         return self._read_pw_query(len(command))[0]
@@ -129,6 +165,12 @@ class SSC32Controller:
             self,
             commands: list[QueryPulseWidthCommand]
     ) -> list[int]:
+        """
+        Послать запрос заданной ширины импульса для нескольких сервоприводов.
+
+        :param commands: Набор объединяемых команд.
+        :return: Набор ширин импульсов, соответственно каналу команды.
+        """
         distinct_chans = {cmd.channel for cmd in commands}
         commands_are_distinct = len(distinct_chans) == len(commands)
 

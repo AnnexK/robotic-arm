@@ -15,6 +15,12 @@ pyserial = "^3.5"
 pydantic = "^1.10.6"
 
 
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.1.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+mypy_path = "./stubs"

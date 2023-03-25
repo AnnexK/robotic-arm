@@ -1,62 +1,8 @@
 import time
 from pydantic import BaseModel, Field
 from roboticarm.control.communication import Reader, Writer
-
-
-class CommandSendError(Exception):
-    """
-    Исключение, возникающее при ошибке при отправке команды.
-    """    
-    def __str__(self) -> str:
-        return "Could not send a command"
-
-
-class ServoMoveCommand(BaseModel):
-    """
-    Команда на перемещение одного сервопривода.
-
-    :param channel: Канал контроллера.
-    :param pulse_width: Ширина импульса для привода (мкс).
-    :param time: Время исполнения команды.
-    :param speed: Скорость изменения импульса (мкс/сек).
-    """
-    channel: int = Field(ge=0, lt=32)
-    pulse_width: int = Field(ge=500, le=2500)
-    time: int | None = Field(None, gt=0, le=65535)
-    speed: int | None = Field(None, gt=0)
-
-    def __str__(self) -> str:
-        return (
-            f"#{self.channel}P{self.pulse_width}"
-            f"{f'S{self.speed}' if self.speed else ''}"
-            f"{f'T{self.time}' if self.time else ''}"
-        )
-
-
-class PulseOffsetCommand(BaseModel):
-    """
-    Команда на задание смещения центра ширины импульса.
-
-    :param channel: Канал контроллера.
-    :param pulse_offset: Ширина смещения.
-    """
-    channel: int = Field(ge=0, lt=32)
-    pulse_offset: int = Field(ge=-100, le=100)
-
-    def __str__(self) -> str:
-        return f"#{self.channel}PO{self.pulse_offset}"
-
-
-class QueryPulseWidthCommand(BaseModel):
-    """
-    Команда на получение заданной ширины импульса на канале.
-
-    :param channel: Канал контроллера.
-    """
-    channel: int = Field(ge=0, lt=32)
-
-    def __str__(self) -> str:
-        return f"QP{self.channel}"
+from .exceptions import *
+from .commands import *
 
 
 class SSC32Controller:
@@ -69,7 +15,7 @@ class SSC32Controller:
     """
 
     CHANNEL_AMOUNT = 32
-    
+
     def __init__(self, reader: Reader, writer: Writer):
         self._reader = reader
         self._writer = writer
@@ -81,12 +27,14 @@ class SSC32Controller:
         :param command: Строковое представление команды.
         """
         command += "\r"
+
         if self._writer.write(command.encode(encoding='ascii')) < len(command):
-            raise CommandSendError
+            raise CommandSendError(command)
 
     def set_initial_state(self):
         """
-        Задать начальное положение по всем каналам для инициализации контроллера.
+        Задать начальное положение по всем каналам для
+        инициализации контроллера.
         """
 
         commands = [
@@ -94,7 +42,7 @@ class SSC32Controller:
             for i in range(self.CHANNEL_AMOUNT)
         ]
         self.servo_move_group(commands)
-    
+
     def servo_move(self, command: ServoMoveCommand):
         """
         Послать команду перемещения на один сервопривод.
@@ -188,6 +136,67 @@ class SSC32Controller:
         time.sleep(0.005)
         return self._read_pw_query(len(command))
 
+    def cancel(self):
+        """
+        Отменить исполняемую в данный момент команду.
+        """
+        if self._writer.write(b'\x1B') < 1:
+            raise CommandSendError
+
+    def discrete_output(self, commands: list[DiscreteOutputCommand]):
+        """
+        Выполнить набор команд дискретного вывода.
+
+        :param commands: Набор команд.
+        """
+        distinct_chans = {cmd.channel for cmd in commands}
+        commands_are_distinct = len(distinct_chans) == len(commands)
+
+        if not commands_are_distinct:
+            raise ValueError(commands)
+
+        command = ''.join(str(cmd) for cmd in commands)
+        self._send_command(command)
+
+    def byte_output(self, command: ByteOutputCommand):
+        """
+        Отправить команду побайтового вывода.
+
+        :param command: Команда.
+        """
+        self._send_command(str(command))
+
+    def digital_input(self, commands: list[DigitalInputCommand]) -> list[bool]:
+        """
+        Отправить команду цифрового ввода.
+
+        :param commands: Набор объединяемых команд.
+        :return: Прочитанные с входов значения.
+        """
+
+        command_num = len(commands)
+        if command_num > 8:
+            raise ValueError(commands)
+
+        command = ''.join(str(cmd) for cmd in commands)
+        self._send_command(command)
+        time.sleep(0.08)
+        return self._read_digital_input(command_num)
+
+    def analog_input(self, commands: list[AnalogInputCommand]) -> list[int]:
+        """
+        Отправить команду аналогового ввода.
+
+        :param commands: Набор объединяемых команд.
+        :return: Прочитанные с входов значения.
+        """
+        command_num = len(commands)
+
+        command = ''.join(str(cmd) for cmd in commands)
+        self._send_command(command)
+        time.sleep(0.008)
+        return self._read_analog_input(command_num)
+
     def _read_pw_query(self, command_number: int) -> list[int]:
         """
         Прочитать и декодировать ответ на запрос ширин импульсов.
@@ -197,4 +206,35 @@ class SSC32Controller:
         """
 
         response = self._reader.read(command_number)
+        if len(response) < command_number:
+            raise CommandReadError
+
         return [int(w)*10 for w in response]
+
+    def _read_digital_input(self, command_number: int) -> list[bool]:
+        """
+        Прочитать и декодировать ответ на запрос цифрового ввода.
+
+        :param command_number: Сколько команд было в запросе.
+        :return: Ответ.
+        """
+
+        response = self._reader.read(command_number)
+        if len(response) < command_number:
+            raise CommandReadError
+
+        return [bool(resp_bit-ord('0')) for resp_bit in response]
+
+    def _read_analog_input(self, command_number: int) -> list[int]:
+        """
+        Прочитать и декодировать ответ на запрос аналогового ввода.
+
+        :param command_number: Сколько команд было в запросе.
+        :return: Ответ.
+        """
+
+        response = self._reader.read(command_number)
+        if len(response) < command_number:
+            raise CommandReadError
+
+        return [int(b) for b in response]

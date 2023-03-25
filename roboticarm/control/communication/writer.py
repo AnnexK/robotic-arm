@@ -6,7 +6,7 @@ class Writer(Protocol):
     Протокол писателя.
     """
 
-    def write(data: bytes) -> int:
+    def write(self, data: bytes) -> int:
         """
         Записать данные.
 

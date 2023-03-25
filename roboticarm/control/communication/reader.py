@@ -6,7 +6,7 @@ class Reader(Protocol):
     Протокол читателя.
     """
 
-    def read(size: int = 1) -> bytes:
+    def read(self, size: int = 1) -> bytes:
         """
         Прочитать набор данных.
 

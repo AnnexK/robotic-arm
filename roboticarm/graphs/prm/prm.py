@@ -1,9 +1,12 @@
 from typing import Sequence
-from env.types import State
+
 import numpy.random as random
+
+from roboticarm.env.types import State
+from roboticarm.env.robot import Robot
+
 from .nearest.nearest import KNearest
 from .prmgraph import PRMGraph
-from env.robot import Robot
 
 
 class PRM:
@@ -20,12 +23,8 @@ class PRM:
         while True:
             s = self.rng.random(size)
             v = tuple(
-                (u-l) * s[i] + l for i, (u, l) in enumerate(
-                    zip(
-                        self.robot.upper,
-                        self.robot.lower
-                    )
-                )
+                (u - l) * s[i] + l
+                for i, (u, l) in enumerate(zip(self.robot.upper, self.robot.lower))
             )
             self.robot.state = v
             if not self.robot.check_collisions():
@@ -35,9 +34,11 @@ class PRM:
         return self.near.nearest(v, self.n)
 
     def try_connect(self, graph: PRMGraph, v: State, w: State):
-        diff = tuple( (wc-vc)/self.nsteps for wc, vc in zip(w,v) )
+        diff = tuple((wc - vc) / self.nsteps for wc, vc in zip(w, v))
+
         def next_config(cur: State) -> State:
-            return tuple(c+d for c, d in zip(cur, diff))
+            return tuple(c + d for c, d in zip(cur, diff))
+
         cur = next_config(v)
         for _ in range(self.nsteps):
             self.robot.state = cur

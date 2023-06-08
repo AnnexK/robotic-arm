@@ -1,5 +1,5 @@
-from ..vertex import GGVertex as V
 import abc
+from roboticarm.graphs.gridgraph.vertex import GGVertex as V
 
 
 class PhiManager(metaclass=abc.ABCMeta):

@@ -1,11 +1,12 @@
-from graphs.prm.metrics.metric import Metric
-from .nearest import KNearest
+import heapq as heap
 from math import inf
 from typing import List, Optional, Sequence, Tuple
-from env.types import State
-from util.quickselect import quickselect
-import heapq as heap
 
+from roboticarm.graphs.prm.metrics.metric import Metric
+from roboticarm.env.types import State
+from roboticarm.util.quickselect import quickselect
+
+from .nearest import KNearest
 
 
 class KDTree(KNearest):
@@ -14,6 +15,7 @@ class KDTree(KNearest):
             self.val: State = val
             self.left: Optional[KDTree.KDNode] = None
             self.right: Optional[KDTree.KDNode] = None
+
     Node = Optional[KDNode]
 
     def __init__(self, dim: int, metric: Metric, states: List[State] = []):
@@ -27,23 +29,24 @@ class KDTree(KNearest):
             return None
         if len(states) == 1:
             return KDTree.KDNode(states[0])
-        
-        ndim = (cdim+1) % self.dim
 
-        m = (len(states)-1) // 2
+        ndim = (cdim + 1) % self.dim
+
+        m = (len(states) - 1) // 2
         self._median(states, cdim)
         ret = KDTree.KDNode(states[m])
         ret.left = self._init_tree(states[:m], ndim)
-        ret.right = self._init_tree(states[m+1:], ndim)
+        ret.right = self._init_tree(states[m + 1 :], ndim)
         return ret
-    
+
     def metric(self) -> Metric:
         return self._metric
-    
+
     def _median(self, states: List[State], dim: int):
         def _less(x: State, y: State) -> bool:
             return x[dim] < y[dim]
-        m = (len(states)-1) // 2
+
+        m = (len(states) - 1) // 2
         quickselect(states, m, _less)
 
     def insert(self, p: State):
@@ -56,9 +59,9 @@ class KDTree(KNearest):
             pass
         else:
             if val[cd] < node.val[cd]:
-                node.left = self._insert(node.left, val, (cd+1) % self.dim)
+                node.left = self._insert(node.left, val, (cd + 1) % self.dim)
             else:
-                node.right = self._insert(node.right, val, (cd+1) % self.dim)
+                node.right = self._insert(node.right, val, (cd + 1) % self.dim)
         return node
 
     def delete(self, p: State):
@@ -66,7 +69,7 @@ class KDTree(KNearest):
 
     def _delete(self, node: Node, val: State, cd: int):
         if node is not None:
-            ncd = (cd+1) % self.dim
+            ncd = (cd + 1) % self.dim
 
             if val == node.val:
                 if node.right is not None:
@@ -90,12 +93,12 @@ class KDTree(KNearest):
 
     def _size(self, node: Node) -> int:
         return self._size(node.left) + self._size(node.right) + 1 if node else 0
-    
+
     def _find_min(self, node: Node, dim: int, cd: int) -> State:
         if node is None:
             return self.inf
-        
-        ncd = (cd+1) % self.dim
+
+        ncd = (cd + 1) % self.dim
         if cd == dim:
             if node.left is None:
                 return node.val
@@ -116,6 +119,7 @@ class KDTree(KNearest):
                     return node.val
 
     Heap = List[Tuple[float, State]]
+
     def nearest(self, p: State, k: int) -> Sequence[State]:
         # heapq реализует min-кучи, выталкивающие минимальное значение
         # поэтому будем хранить расстояния со знаками минус
@@ -126,7 +130,7 @@ class KDTree(KNearest):
 
     def _nearest(self, h: Heap, node: Node, p: State, cd: int):
         if node is not None:
-            ncd = (cd+1) % self.dim
+            ncd = (cd + 1) % self.dim
             # пробуем разместить вершину в куче
             # а затем вытолкнуть наибольшую из кучи
             heap.heappushpop(h, (-self._metric(p, node.val), node.val))
@@ -135,9 +139,11 @@ class KDTree(KNearest):
             # если длина отрицательная то искать сначала в левом (типа целевая точка находится слева
             # от рассматриваемой)
             # иначе в правом
-            better, worse = (node.left, node.right) if cddiff < 0.0 else (node.right, node.left)
+            better, worse = (
+                (node.left, node.right) if cddiff < 0.0 else (node.right, node.left)
+            )
             self._nearest(h, better, p, ncd)
             # если перпендикуляр от целевой до плоскости меньше наибольшего расстояния в куче
-            # то имеет смысл посмотреть в другое поддерево 
+            # то имеет смысл посмотреть в другое поддерево
             if abs(cddiff) < -h[0][0]:
                 self._nearest(h, worse, p, ncd)

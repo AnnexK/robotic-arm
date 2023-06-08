@@ -1,5 +1,5 @@
 import abc
-from env.types import State
+from roboticarm.env.types import State
 
 
 class Metric(metaclass=abc.ABCMeta):

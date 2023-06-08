@@ -1,5 +1,5 @@
 import abc
-from ..vertex import GGVertex as V
+from roboticarm.graphs.gridgraph.vertex import GGVertex as V
 
 
 class WeightManager(metaclass=abc.ABCMeta):

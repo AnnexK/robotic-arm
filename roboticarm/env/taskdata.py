@@ -1,32 +1,25 @@
-from typing import Dict, Any, Optional
+from pathlib import Path
+
+from pydantic import BaseModel, Field, validator
+
 from .types import Vector3, State
-import pathlib
 
 
 class TaskDataError(Exception):
     pass
 
 
-class TaskData:
-    def __init__(self, dct: Dict[str, Any]):
-        try:
-            self.urdf: str = str(pathlib.Path(dct['urdf_name']).resolve().absolute())
-            self.sdf: str = dct.get('sdf_name', '')
-            if self.sdf:
-                self.sdf = str(pathlib.Path(self.sdf).resolve().absolute())
-            self.effector = dct['effector_name']
-            self.target_pos: Vector3 = dct['endpoint']
-            self.pos: Vector3 = dct.get('pos', (.0, .0, .0))
-            self.orn: Vector3 = dct.get('orn', (.0, .0, .0))
-            self.fixed: bool = dct.get('fixed_base', True)
-            self.eps: float = dct.get('eps', 1e-4)
-            s = dct.get('dofs', None)
-            self.init_state: Optional[State] = None if s is None else tuple(s)
-        except KeyError as k:
-            raise TaskDataError(f'Task data invalid: {k.args}')
+class TaskData(BaseModel):
+    urdf: Path = Field(alias="urdf_name")
+    sdf: Path | None = Field(alias="sdf_name")
+    effector: str = Field(alias="effector_name")
+    target_pos: Vector3 = Field(alias="endpoint")
+    pos: Vector3 = Field((.0, .0, .0))
+    orn: Vector3 = Field((.0, .0, .0))
+    fixed: bool = Field(True, alias="fixed_base")
+    eps: float = Field(1e-4, ge=1e-6)
+    init_state: State | None = Field(None, alias="dofs")
 
-
-def task_json_parse(dct: Dict[str, Any]):
-    """Добавляет к прочитанному из json словарю значения по умолчанию,
-если они не были предоставлены"""
-    return TaskData(dct)
+    @validator('urdf', 'sdf')
+    def absolutize_paths(cls, value: Path) -> Path:
+        return value.resolve().absolute()

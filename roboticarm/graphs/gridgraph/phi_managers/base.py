@@ -1,6 +1,7 @@
-from .manager import PhiManager
 from typing import Tuple, Dict
-from ..vertex import GGVertex as V
+from .manager import PhiManager
+
+from roboticarm.graphs.gridgraph.vertex import GGVertex as V
 
 
 class BasePhiManager(PhiManager):
@@ -29,6 +30,6 @@ class BasePhiManager(PhiManager):
             self.phi[key] = val
 
     def evaporate(self, rate: float):
-        self.common_phi *= (1 - rate)
+        self.common_phi *= 1 - rate
         for k in self.phi:
-            self.phi[k] *= (1 - rate)
+            self.phi[k] *= 1 - rate

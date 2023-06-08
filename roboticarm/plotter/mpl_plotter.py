@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 from .plotter import Plotter, PlotPoint, PlotterLink
-from typing import Dict, List
 
 
 class MPLPlotter(Plotter):
@@ -8,7 +7,7 @@ class MPLPlotter(Plotter):
 
     def __init__(self):
         self.id: int = MPLPlotter.num
-        self.point_rows: Dict[PlotterLink, List[PlotPoint]] = dict()
+        self.point_rows: dict[PlotterLink, list[PlotPoint]] = dict()
         MPLPlotter.num += 1
         plt.show(block=False)
 

@@ -1,6 +1,6 @@
 import abc
 from typing import Iterable, TypeVar, Generic, Sequence
-from ..ants import BaseAnt
+from roboticarm.solver.ants import BaseAnt
 
 
 V = TypeVar('V')

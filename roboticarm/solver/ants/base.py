@@ -1,17 +1,20 @@
 from __future__ import annotations
 
+import logging
 from typing import Generic, TypeVar
-
+from copy import deepcopy
 from numpy import inf
 import numpy.random as random
-from copy import deepcopy
 
-from logger import log
-from graphs import PhiGraph
+from roboticarm.graphs import PhiGraph
 
-V = TypeVar('V')
+_logger = logging.getLogger(__name__)
+V = TypeVar("V")
+
+
 class BaseAnt(Generic[V]):
     """Класс, моделирующий поведение муравья"""
+
     def __init__(self, a: float, b: float, graph: PhiGraph[V], start: V, end: V):
         self.alpha = a
         self.beta = b
@@ -53,7 +56,7 @@ class BaseAnt(Generic[V]):
         else:
             Wg = 1 / Wg
         p = self.g.get_phi(v, w)
-        return p ** self.alpha * Wg ** self.beta
+        return p**self.alpha * Wg**self.beta
 
     def reset(self):
         pass
@@ -63,14 +66,14 @@ class BaseAnt(Generic[V]):
         v = self.path.pop()
         if not self.path:
             if self.fallback_len == 1:
-                raise RuntimeError('Something something terrible news!')
+                raise RuntimeError("Something something terrible news!")
             else:
                 self.path.append(v)
                 self.fallback_len = 0
         else:
             self.visited.remove(v)
 
-    def pick_edge(self):
+    def pick_edge(self) -> None:
         """Совершает перемещение в одну из соседних точек в графе G"""
         v = self.pos
 
@@ -83,7 +86,7 @@ class BaseAnt(Generic[V]):
 
         # некуда идти
         if total_attr == 0.0:
-            log()['ATTR_DEBUG'].log('Total attr is 0, falling back')
+            _logger.debug("Total attraction value is 0, falling back")
             self.fallback_len += 1
             for _ in range(self.fallback_len - self.required_fallback):
                 self._fall_back()
@@ -108,19 +111,15 @@ class BaseAnt(Generic[V]):
         if self.complete:
             G = self.g
             phi = Q / self.path_len
-            log()['PHI_DEPOSIT'].log(f'{phi} pheromone.')
+            _logger.debug("Depositing %f pheromone", phi)
             for v, w in zip(self.path[:-1], self.path[1:]):
                 G.add_phi(v, w, phi)
         else:
-            log()['PHI_DEPOSIT'].log('no pheromone.')
+            _logger.debug("Depositing no pheromone")
 
     # overridable base
     def clone(self) -> BaseAnt[V]:
-        ret: BaseAnt[V] = BaseAnt(self.alpha,
-                                  self.beta,
-                                  self.g,
-                                  self.pos,
-                                  self.target)
+        ret: BaseAnt[V] = BaseAnt(self.alpha, self.beta, self.g, self.pos, self.target)
 
         ret.path = deepcopy(self.path)
         ret.visited = deepcopy(self.visited)

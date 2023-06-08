@@ -1,13 +1,12 @@
-from graphs.gridgraph.vertex import GGVertex
-from solver import RoboticGraphBuilder, CartesianAnt, ElitistAS, AntSolver
-from solver import NullDaemon
-import plotter
-from plotter.null import NullPlotter
+from roboticarm.graphs.gridgraph.vertex import GGVertex
+from roboticarm.solver import RoboticGraphBuilder, CartesianAnt, ElitistAS, AntSolver
+from roboticarm.solver import NullDaemon
+from roboticarm.solver.aco_algorithms import ACOAlgorithm
+import roboticarm.plotter as plotter
+from roboticarm.plotter.null import NullPlotter
+from roboticarm.env import Environment, Robot, State
+from .acoparams import ACOParams
 from .planner import Planner, Plan
-from env.environment import Environment
-from env.robot import Robot
-
-from client.acoparams import ACOParams
 
 
 class ACOStockPlanner(Planner):
@@ -17,18 +16,15 @@ class ACOStockPlanner(Planner):
         self.out = out
         self.plot = plot
 
-    def plan(self, env: Environment) -> Plan:
+    def plan(self, env: Environment, goal_state: State) -> Plan:
         if env.robot is None:
-            raise Exception('Should not happen')
+            raise Exception("Should not happen")
         else:
             R: Robot = env.robot
-        ret: Plan = [R.state]
+        ret: list[State] = [R.state]
         goal = env.target
 
-        g = RoboticGraphBuilder(
-            R,
-            self.aco.phi
-        ).build_graph()
+        g = RoboticGraphBuilder(R, self.aco.phi).build_graph()
 
         eps = R.kin_eps
 
@@ -47,22 +43,11 @@ class ACOStockPlanner(Planner):
         )
 
         ant = CartesianAnt(
-            self.aco.alpha,
-            self.aco.beta,
-            self.gamma,
-            g,
-            R,
-            vstart,
-            vend
+            self.aco.alpha, self.aco.beta, self.gamma, g, R, vstart, vend
         )
 
-        alg = ElitistAS(
-            g,
-            self.aco.q,
-            self.aco.rho,
-            self.aco.limit,
-            NullDaemon(),
-            self.aco.elite
+        alg: ACOAlgorithm[GGVertex] = ElitistAS(
+            g, self.aco.q, self.aco.rho, self.aco.limit, NullDaemon(), self.aco.elite
         )
 
         S = AntSolver(alg, ant)
@@ -70,15 +55,14 @@ class ACOStockPlanner(Planner):
         P = plotter.mpl_plotter.MPLPlotter() if self.plot else NullPlotter()
         for L in S.get_links():
             L.attach(P)
-        
+
         path = S.solve(self.aco.i, self.aco.m)
 
         for v in path[1:]:
-
             o = (
-                origin[0] + eps*v[0],
-                origin[1] + eps*v[1],
-                origin[2] + eps*v[2],
+                origin[0] + eps * v[0],
+                origin[1] + eps * v[1],
+                origin[2] + eps * v[2],
             )
             R.move_to(o)
             ret.append(R.state)

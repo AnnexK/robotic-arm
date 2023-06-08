@@ -1,15 +1,23 @@
-from solver.daemons.daemon import Daemon
-from graphs.phigraph import PhiGraph
 from typing import Iterable, TypeVar
+from roboticarm.solver.daemons.daemon import Daemon
+from roboticarm.graphs.phigraph import PhiGraph
+from roboticarm.solver.ants import BaseAnt
 from .ant_system import AntSystem
-from ..ants import BaseAnt
 
 
-V = TypeVar('V')
+V = TypeVar("V")
 
 
 class ASRank(AntSystem[V]):
-    def __init__(self, G: PhiGraph[V], Q: float, decay: float, limit: int, rank_num: int, daemon: Daemon):
+    def __init__(
+        self,
+        G: PhiGraph[V],
+        Q: float,
+        decay: float,
+        limit: int,
+        rank_num: int,
+        daemon: Daemon,
+    ):
         super().__init__(G, Q, decay, limit, daemon)
         self.rank_n = rank_num
 

@@ -1,22 +1,30 @@
-import json
+from logging import getLogger
 
-from env.environment import Environment
 from .taskdata import TaskData
+from .robot import Robot, State
+from .environment import Environment
 
-from logger import log
 
-from .taskdata import TaskData, task_json_parse
+_logger = getLogger(__name__)
 
 
 def load_task(filename: str, render: bool, fallback: bool) -> Environment:
-    """Загружает параметры задачи из json-файла filename"""
-    with open(filename, 'r') as fp:
-        td: TaskData = json.load(fp, object_hook=task_json_parse)
+    """Загружает параметры задачи из json-файла filename."""
+    task_data = TaskData.parse_file(filename)
 
-    E = Environment(render,
-                    fallback)
-    E.load_task(td)
+    env = Environment(render,
+                      fallback)
+    env.load_task(task_data)
 
-    log()['PYBULLET'].log('environment loaded successfully')
+    _logger.debug("Environment loaded successfully")
 
-    return E
+    return env
+
+
+__all__ = [
+    Robot.__name__,
+    State.__name__,
+    Environment.__name__,
+    TaskData.__name__,
+    load_task.__name__,
+]

@@ -1,13 +1,24 @@
-import abc
-from typing import Sequence
-from env.types import State
-from env.environment import Environment
+from typing import Sequence, Protocol
+
+from roboticarm.env.types import State
+from roboticarm.env.environment import Environment
 
 
 Plan = Sequence[State]
 
 
-class Planner(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def plan(self, env: Environment) -> Plan:
-        pass
+class Planner(Protocol):
+    """
+    Протокол планировщика траектории.
+    """
+
+    def plan(self, env: Environment, goal_state: State) -> Plan:
+        """
+        Спланировать траекторию перемещения для робота в среде
+        для определенного целевого положения.
+
+        :param env: Среда робота.
+        :param goal_state: Целевое положение.
+        :return: Траектория перемещения.
+        """
+        ...

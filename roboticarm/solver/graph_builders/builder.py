@@ -1,6 +1,6 @@
 import abc
 from typing import Generic, TypeVar
-from graphs import PhiGraph
+from roboticarm.graphs import PhiGraph
 
 
 V = TypeVar('V')

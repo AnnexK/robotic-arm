@@ -23,4 +23,6 @@ class SerialPort:
         return self._serial.read(size)
 
     def write(self, data: bytes) -> int:
-        return self._serial.write(data)
+
+        # какой-то алкаш написал Serial.write так, что он возвращает Optional
+        return self._serial.write(data) or 0

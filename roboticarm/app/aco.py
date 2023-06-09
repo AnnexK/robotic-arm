@@ -1,4 +1,15 @@
 import argparse
+from logging import getLogger
+
+from roboticarm.config.logging_config import init_logging, logging_config
+
+import roboticarm.env as env
+
+from roboticarm.planner.stock_planner import ACOStockPlanner
+from roboticarm.planner.acoparams import ACOParams
+
+
+_logger = getLogger(__name__)
 
 
 def make_parser():
@@ -7,23 +18,15 @@ def make_parser():
     ret.add_argument('task', help='task filename')
     ret.add_argument('csv', help='csv stats filename')
     ret.add_argument('seq', help='q sequence filename')
-    # PRM
-    ret.add_argument('--nmax',
-                     help='Amount of vertices in PRM',
-                     type=int, default=1000)
-    ret.add_argument('--threshold',
-                     help='Pheromone threshold for reroute daemon',
-                     type=float, default=1e-6)
-    ret.add_argument('--kmax',
-                     help='Max amount of neighbours to consider in PRM',
-                     type=int, default=15)
-    # ACO
     ret.add_argument('-a', '--alpha',
                      help='pheromone attractiveness modifier',
                      type=float, default=1.0)
     ret.add_argument('-b', '--beta',
                      help='weight attractiveness modifier',
                      type=float, default=1.0)
+    ret.add_argument('-g', '--gamma',
+                     help='angle attractiveness modifier',
+                     type=float, default=0.0)
     ret.add_argument('-p', '--phi',
                      help='base pheromone level',
                      type=float, default=0.1)
@@ -33,7 +36,7 @@ def make_parser():
     ret.add_argument('-q', '--ant-power',
                      help='amount of pheromone an ant distributes',
                      type=float, default=1.0)
-    ret.add_argument('-k', '--ant-num',
+    ret.add_argument('-m', '--ant-num',
                      help='number of ants',
                      type=int, default=1)
     ret.add_argument('-i', '--iters',
@@ -59,3 +62,48 @@ def make_parser():
                             help='launch solver in opengl2 (fallback) mode',
                             action='store_true')
     return ret
+
+
+def main():
+    """Основная функция программы ACOStock."""
+    init_logging(logging_config(True))
+    parser = make_parser()
+    args = parser.parse_args()
+
+    if args.gamma < 0.0:
+        _logger.error("Gamma value not in bounds: %f", args.gamma)
+        return
+
+    try:
+        params = ACOParams.parse_obj(vars(args))
+    except ValueError as exc:
+        print(exc)
+        _logger.exception(exc, "Check input parameters")
+        return
+
+    print(params)
+    _logger.info("Loading task")
+    task_env = env.load_task(args.task, render=not args.silent, fallback=args.fallback)
+
+    _logger.debug("Task loaded successfully")
+    _logger.info("Planning")
+
+    _logger.debug("Creating planner")
+    planner = ACOStockPlanner(params, args.gamma, args.csv, args.plot)
+    _logger.debug("Executing planner")
+    plan = planner.plan(task_env, None)
+    del planner
+
+    _logger.info("Planning complete")
+    _logger.info("Writing plan to file")
+    with open(args.seq, "w") as fp:
+        for s in plan:
+            fp.write(f'{",".join(str(c) for c in s)}\n')
+
+    _logger.info("Done")
+
+
+if __name__ == "__main__":
+    main()
+else:
+    print("wtf")

@@ -1,6 +1,6 @@
 from math import sqrt
+from roboticarm.env.robot import Robot, State
 from .metric import Metric
-from env.robot import Robot, State
 
 
 class EffectorDisplacementMetric(Metric):
@@ -13,4 +13,4 @@ class EffectorDisplacementMetric(Metric):
         self.robot.state = B
         eb = self.robot.get_effector()
 
-        return sqrt( sum( (a-b)*(a-b) for a, b in zip(ea, eb) ) )
+        return sqrt(sum((a - b) * (a - b) for a, b in zip(ea, eb)))

@@ -1,9 +1,14 @@
-from env.types import Vector3
-from env.robot import Robot
 from math import inf
-from logger import log
+from logging import getLogger
+
+
+from roboticarm.env.types import Vector3
+from roboticarm.env.robot import Robot
+from roboticarm.graphs.gridgraph.vertex import GGVertex
 from .manager import WeightManager
-from ..vertex import GGVertex
+
+
+_logger = getLogger(__name__)
 
 
 class RobotWeight(WeightManager):
@@ -17,15 +22,14 @@ class RobotWeight(WeightManager):
             m = R.move_to(target)
             col = R.check_collisions()
             if col:
-                log()['COLLISION'].log('collision detected')
+                _logger.warning("collision detected")
             return m and not col
+
         o = self.origin
 
         e = self.w
 
-        w_real: Vector3 = (o[0]+e*w[0],
-                           o[1]+e*w[1],
-                           o[2]+e*w[2])
+        w_real: Vector3 = (o[0] + e * w[0], o[1] + e * w[1], o[2] + e * w[2])
         state = self.R.state
         ret = self.w if moved_normally(self.R, w_real) else inf
         self.R.state = state

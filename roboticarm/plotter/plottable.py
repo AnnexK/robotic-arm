@@ -1,14 +1,15 @@
 import abc
-from .plotter import Plotter, PlotterLink, PlotPoint
+
 from weakref import WeakSet
 from typing import Iterable
+from .plotter import Plotter, PlotterLink, PlotPoint
 
 
 class Link(PlotterLink):
     def __init__(self):
         self._plotters: WeakSet[Plotter] = WeakSet()
         self.x = self.y = 0.0
-        
+
     def get_point(self) -> PlotPoint:
         return PlotPoint(self.x, self.y)
 

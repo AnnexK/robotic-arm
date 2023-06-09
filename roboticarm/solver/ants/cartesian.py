@@ -1,16 +1,27 @@
 from copy import deepcopy
 
 from math import acos, sqrt
+
+from roboticarm.graphs.gridgraph.vertex import GGVertex as V
+from roboticarm.graphs import PhiGraph
+from roboticarm.env.robot import Robot
+from roboticarm.env.types import Vector3
 from .base import BaseAnt as Ant
-from graphs.gridgraph.vertex import GGVertex as V
-from graphs import PhiGraph
-from env.robot import Robot
-from env.types import Vector3
 
 
 class CartesianAnt(Ant[V]):
     """Класс, моделирующий поведение муравья для старого алгоритма"""
-    def __init__(self, a: float, b: float, g: float, graph: PhiGraph[V], robot: Robot, start: V, end: V):
+
+    def __init__(
+        self,
+        a: float,
+        b: float,
+        g: float,
+        graph: PhiGraph[V],
+        robot: Robot,
+        start: V,
+        end: V,
+    ):
         super().__init__(a, b, graph, start, end)
 
         # derived-specific
@@ -25,25 +36,25 @@ class CartesianAnt(Ant[V]):
     @property
     def pos(self) -> V:
         return super().pos
-    
+
     @pos.setter
     def pos(self, value: V):
         # вычисляем вес и добавляем в список
         prev_pos = super().pos
-        
+
         # вызов сеттера для свойства базового класса
-        super(CartesianAnt, CartesianAnt).pos.fset(self, value) # type: ignore
-        
+        super(CartesianAnt, CartesianAnt).pos.fset(self, value)  # type: ignore
+
         self.weights.append(self.g.get_weight(prev_pos, value))
 
         # перемещаем робота в вершину
         step = self.robot.kin_eps
         new_eff: Vector3 = (
-            self.origin[0]+step*value[0],
-            self.origin[1]+step*value[1],
-            self.origin[2]+step*value[2]
+            self.origin[0] + step * value[0],
+            self.origin[1] + step * value[1],
+            self.origin[2] + step * value[2],
         )
-        
+
         self.robot.move_to(new_eff)
         self.states.append(self.robot.state)
 
@@ -56,8 +67,7 @@ class CartesianAnt(Ant[V]):
             return 1.0
 
         move_vec = tuple(w_i - v_i for w_i, v_i in zip(w, v))
-        end_vec = tuple(e_i - p_i for e_i, p_i in zip(self.target,
-                                                      self.pos))
+        end_vec = tuple(e_i - p_i for e_i, p_i in zip(self.target, self.pos))
 
         end_vec_len = sqrt(sum(c * c for c in end_vec))
         dot_pr = sum(a * b for a, b in zip(move_vec, end_vec))
@@ -69,7 +79,7 @@ class CartesianAnt(Ant[V]):
         val = super().attraction(v, w)
         th = self._orient_angle(v, w)
         u = 1 / (1 + th)
-        return val * u ** self.gamma
+        return val * u**self.gamma
 
     # overridable base
     def _fall_back(self):
@@ -81,16 +91,12 @@ class CartesianAnt(Ant[V]):
     def reset(self):
         super().reset()
         self.robot.state = self.states[0]
-    
+
     # overridable base
     def clone(self) -> Ant[V]:
-        ret = CartesianAnt(self.alpha,
-                           self.beta,
-                           self.gamma,
-                           self.g,
-                           self.robot,
-                           self.pos,
-                           self.target)
+        ret = CartesianAnt(
+            self.alpha, self.beta, self.gamma, self.g, self.robot, self.pos, self.target
+        )
         ret.path = deepcopy(self.path)
         ret.states = deepcopy(self.states)
         ret.weights = deepcopy(self.weights)

@@ -1,19 +1,23 @@
-import numpy.random as random
 from math import inf
-from logger import log
 from copy import deepcopy
 from typing import TypeVar, List, Iterable, Sequence
+import logging
+import numpy.random as random
+from roboticarm.solver.daemons import Daemon
+from roboticarm.graphs import PhiGraph
+from roboticarm.solver.ants import BaseAnt
 from .algorithm import ACOAlgorithm
-from ..daemons import Daemon
-from graphs import PhiGraph
-from ..ants import BaseAnt
 
 
-V = TypeVar('V')
+V = TypeVar("V")
+
+_logger = logging.getLogger(__name__)
 
 
 class AntSystem(ACOAlgorithm[V]):
-    def __init__(self, G: PhiGraph[V], Q: float, decay: float, limit: int, daemon: Daemon):
+    def __init__(
+        self, G: PhiGraph[V], Q: float, decay: float, limit: int, daemon: Daemon
+    ):
         random.seed()
         self.graph = G
         self.ant_power = Q
@@ -24,24 +28,26 @@ class AntSystem(ACOAlgorithm[V]):
         self.best_length = inf
         self.limit = limit
         self.daemon = daemon
-        
+
     def generate_solutions(self, ants: Iterable[BaseAnt[V]]):
         for i, a in enumerate(ants):
             steps: int = 0
-            log()['ANT'].log('Ant #{}'.format(i+1))
+            _logger.debug("Ant #%d", i + 1)
             while not a.complete and self.limit and steps < self.limit:
                 a.pick_edge()
                 steps += 1
                 if steps % 10000 == 0:
-                    log()['ANT'].log('{} steps'
-                                     .format(steps))
+                    _logger.debug("%d steps", steps)
             if not a.complete:
-                log()['ANT'].log(f'Ant #{i+1} hit the limit, aborting...')
+                _logger.warning("Ant #%d has failed to find solution")
             else:
                 length = a.path_len
-                log()['ANT'].log('Ant #{} finished'.format(i+1))
-                log()['ANT'].log('Path length: {}'.format(length))
-                log()['ANT'].log(f'Vtx in path = {len(a.path)}')
+                _logger.debug(
+                    "Ant #%d finished; path length=%f; vtxlen=%d",
+                    i + 1,
+                    length,
+                    len(a.path),
+                )
                 if length < self.best_length:
                     self.best_length = length
                     self.best_solution = deepcopy(a.path)
@@ -56,7 +62,7 @@ class AntSystem(ACOAlgorithm[V]):
         self.graph.evaporate(self.rate)
         # отложение
         for i, a in enumerate(ants):
-            log()['PHI_DEPOSIT'].log(f'Ant #{i+1} deposits: ')
+            _logger.debug("Ant #%d deposits ", i + 1)
             a.deposit_pheromone(self.ant_power)
 
     def daemon_actions(self):

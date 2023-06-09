@@ -1,7 +1,7 @@
 import abc
 from typing import Sequence
-from env.types import State
-from ..metrics.metric import Metric
+from roboticarm.env.types import State
+from roboticarm.graphs.prm.metrics.metric import Metric
 
 
 class KNearest(metaclass=abc.ABCMeta):

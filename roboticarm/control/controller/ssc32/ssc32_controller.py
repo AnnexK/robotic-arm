@@ -1,8 +1,6 @@
 import time
-from pydantic import BaseModel, Field
 from roboticarm.control.communication import Reader, Writer
-from .exceptions import *
-from .commands import *
+from . import commands as cmds, exceptions
 
 
 class SSC32Controller:
@@ -28,8 +26,8 @@ class SSC32Controller:
         """
         command += "\r"
 
-        if self._writer.write(command.encode(encoding='ascii')) < len(command):
-            raise CommandSendError(command)
+        if self._writer.write(command.encode(encoding="ascii")) < len(command):
+            raise exceptions.CommandSendError(command)
 
     def set_initial_state(self):
         """
@@ -38,12 +36,12 @@ class SSC32Controller:
         """
 
         commands = [
-            ServoMoveCommand(channel=i, pulse_width=1500)
+            cmds.ServoMoveCommand(channel=i, pulse_width=1500)
             for i in range(self.CHANNEL_AMOUNT)
         ]
         self.servo_move_group(commands)
 
-    def servo_move(self, command: ServoMoveCommand):
+    def servo_move(self, command: cmds.ServoMoveCommand):
         """
         Послать команду перемещения на один сервопривод.
 
@@ -52,7 +50,7 @@ class SSC32Controller:
 
         self._send_command(str(command))
 
-    def servo_move_group(self, commands: list[ServoMoveCommand]):
+    def servo_move_group(self, commands: list[cmds.ServoMoveCommand]):
         """
         Послать команду перемещения на несколько сервоприводов.
 
@@ -64,10 +62,10 @@ class SSC32Controller:
         if not commands_are_distinct:
             raise ValueError(commands)
 
-        command = ''.join(str(cmd) for cmd in commands)
+        command = "".join(str(cmd) for cmd in commands)
         self._send_command(command)
 
-    def pulse_offset(self, command: PulseOffsetCommand):
+    def pulse_offset(self, command: cmds.PulseOffsetCommand):
         """
         Послать команду задания смещения импульса на один сервопривод.
 
@@ -75,7 +73,7 @@ class SSC32Controller:
         """
         self._send_command(str(command))
 
-    def pulse_offset_group(self, commands: list[PulseOffsetCommand]):
+    def pulse_offset_group(self, commands: list[cmds.PulseOffsetCommand]):
         """
         Послать команду задания смещения на несколько сервоприводов.
 
@@ -87,7 +85,7 @@ class SSC32Controller:
         if not commands_are_distinct:
             raise ValueError(commands)
 
-        command = ''.join(str(cmd) for cmd in commands)
+        command = "".join(str(cmd) for cmd in commands)
         self._send_command(command)
 
     def query_movement_status(self) -> bool:
@@ -100,9 +98,9 @@ class SSC32Controller:
         self._send_command(command)
         time.sleep(0.005)
         response = self._reader.read(1)
-        return response == b'+'
+        return response == b"+"
 
-    def query_pulse_width(self, command: QueryPulseWidthCommand) -> int:
+    def query_pulse_width(self, command: cmds.QueryPulseWidthCommand) -> int:
         """
         Послать запрос заданной ширины импульса для одного сервопривода.
 
@@ -116,8 +114,7 @@ class SSC32Controller:
         return self._read_pw_query(1)[0]
 
     def query_pulse_width_group(
-            self,
-            commands: list[QueryPulseWidthCommand]
+        self, commands: list[cmds.QueryPulseWidthCommand]
     ) -> list[int]:
         """
         Послать запрос заданной ширины импульса для нескольких сервоприводов.
@@ -131,7 +128,7 @@ class SSC32Controller:
         if not commands_are_distinct:
             raise ValueError(commands)
 
-        command = ''.join(str(cmd) for cmd in commands)
+        command = "".join(str(cmd) for cmd in commands)
         self._send_command(command)
         time.sleep(0.005)
         return self._read_pw_query(len(command))
@@ -140,10 +137,10 @@ class SSC32Controller:
         """
         Отменить исполняемую в данный момент команду.
         """
-        if self._writer.write(b'\x1B') < 1:
-            raise CommandSendError
+        if self._writer.write(b"\x1B") < 1:
+            raise cmds.CommandSendError
 
-    def discrete_output(self, commands: list[DiscreteOutputCommand]):
+    def discrete_output(self, commands: list[cmds.DiscreteOutputCommand]):
         """
         Выполнить набор команд дискретного вывода.
 
@@ -155,10 +152,10 @@ class SSC32Controller:
         if not commands_are_distinct:
             raise ValueError(commands)
 
-        command = ''.join(str(cmd) for cmd in commands)
+        command = "".join(str(cmd) for cmd in commands)
         self._send_command(command)
 
-    def byte_output(self, command: ByteOutputCommand):
+    def byte_output(self, command: cmds.ByteOutputCommand):
         """
         Отправить команду побайтового вывода.
 
@@ -166,7 +163,7 @@ class SSC32Controller:
         """
         self._send_command(str(command))
 
-    def digital_input(self, commands: list[DigitalInputCommand]) -> list[bool]:
+    def digital_input(self, commands: list[cmds.DigitalInputCommand]) -> list[bool]:
         """
         Отправить команду цифрового ввода.
 
@@ -178,12 +175,12 @@ class SSC32Controller:
         if command_num > 8:
             raise ValueError(commands)
 
-        command = ''.join(str(cmd) for cmd in commands)
+        command = "".join(str(cmd) for cmd in commands)
         self._send_command(command)
         time.sleep(0.08)
         return self._read_digital_input(command_num)
 
-    def analog_input(self, commands: list[AnalogInputCommand]) -> list[int]:
+    def analog_input(self, commands: list[cmds.AnalogInputCommand]) -> list[int]:
         """
         Отправить команду аналогового ввода.
 
@@ -192,7 +189,7 @@ class SSC32Controller:
         """
         command_num = len(commands)
 
-        command = ''.join(str(cmd) for cmd in commands)
+        command = "".join(str(cmd) for cmd in commands)
         self._send_command(command)
         time.sleep(0.008)
         return self._read_analog_input(command_num)
@@ -207,9 +204,9 @@ class SSC32Controller:
 
         response = self._reader.read(command_number)
         if len(response) < command_number:
-            raise CommandReadError
+            raise exceptions.CommandReadError
 
-        return [int(w)*10 for w in response]
+        return [int(w) * 10 for w in response]
 
     def _read_digital_input(self, command_number: int) -> list[bool]:
         """
@@ -221,9 +218,9 @@ class SSC32Controller:
 
         response = self._reader.read(command_number)
         if len(response) < command_number:
-            raise CommandReadError
+            raise exceptions.CommandReadError
 
-        return [bool(resp_bit-ord('0')) for resp_bit in response]
+        return [bool(resp_bit - ord("0")) for resp_bit in response]
 
     def _read_analog_input(self, command_number: int) -> list[int]:
         """
@@ -235,6 +232,6 @@ class SSC32Controller:
 
         response = self._reader.read(command_number)
         if len(response) < command_number:
-            raise CommandReadError
+            raise exceptions.CommandReadError
 
         return [int(b) for b in response]

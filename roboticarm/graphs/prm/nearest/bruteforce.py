@@ -1,8 +1,10 @@
-from .nearest import KNearest
-from ..metrics.metric import Metric
 from typing import Iterable, Sequence, Tuple
-from env.types import State
-from util.quickselect import quickselect
+
+from roboticarm.graphs.prm.metrics.metric import Metric
+from roboticarm.env.types import State
+from roboticarm.util.quickselect import quickselect
+
+from .nearest import KNearest
 
 
 class BruteforceNearest(KNearest):
@@ -21,7 +23,7 @@ class BruteforceNearest(KNearest):
 
     def metric(self) -> Metric:
         return self._metric
-    
+
     def nearest(self, p: State, k: int) -> Sequence[State]:
         ret = list((s, self._metric(p, s)) for s in self.states)
         quickselect(ret, k, self._less)

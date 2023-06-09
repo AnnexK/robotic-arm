@@ -16,13 +16,10 @@ pydantic = "^1.10.6"
 
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.3.0"
-numpy = "^1.24.3"
-flake8 = "^6.0.0"
-flake8-pyproject = "^1.2.3"
-flake8-docstrings = "^1.7.0"
-black = "^23.3.0"
 types-pyserial = "^3.5.0.8"
+mypy = "^1.3.0"
+black = "^23.3.0"
+ruff = "^0.0.272"
 
 
 [build-system]
@@ -43,12 +40,25 @@ module = 'matplotlib.*'
 ignore_errors = true
 ignore_missing_imports = true
 
-[tool.flake8]
-ignore = [
-       "D100", # Missing module docstring
-       "D104", # Missing package docstring
+[tool.ruff]
+line-length = 120
+select = [
+  "E",   # pycodestyle Error
+  "W",   # pycodestyle Warning
+  "F",   # pyflakes
+  "D",   # pydocstyle
+  "N",   # pep8-naming
+  "FIX", # FIXME
+  "ARG", # flake8-unused-args
+  "TID", # flake8-tidy-imports
+  "C90", # mccabe
+  "T20", # flake8-print
 ]
-max_line_length = 120
+ignore = [
+  "D100",   # Missing docstring in public module
+  "D104",   # Missing docstring in public package
+]
+fix = false
 
 [tool.black]
 line-length = 120
